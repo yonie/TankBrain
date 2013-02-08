@@ -3,7 +3,7 @@ public class TankBrain {
 	static final String remoteHost = "localhost";
 	static final int downstreamPort = 1360;
 	static final int upstreamPort = 1359;
-	static final String versionString = "0.1.0";
+	static final String versionMajorRevision = "0.1.0";
 	static final String userName = "Ronald";
 	static final int tankColorRed = 20;
 	static final int tankColorGreen = 20;

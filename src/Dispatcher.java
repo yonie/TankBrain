@@ -23,16 +23,29 @@ public class Dispatcher {
 	int tankColorBlue;
 
 	/**
-	 * The Dispatcher sets up connectivity and runs the main thread keeping connection to the server.
+	 * The Dispatcher sets up connectivity and runs the main thread keeping
+	 * connection to the server.
 	 * 
-	 * @param remoteHost The remote host address to connect to.
-	 * @param downstreamPort The port of the downstream connection to use.
-	 * @param upstreamPort The port of the upstream connection to use.
-	 * @param versionString The version string to use during connection. Note that this must match the server side <i>major</i> version. 
-	 * @param userName The user name to use whilst identifying on the server. 
-	 * @param tankColorRed The amount of "red" for the tank color, should be between 0-255. 
-	 * @param tankColorGreen The amount of "green" for the tank color, should be between 0-255.
-	 * @param tankColorBlue The amount of "blue" for the tank color, should be between 0-255.
+	 * @param remoteHost
+	 *            The remote host address to connect to.
+	 * @param downstreamPort
+	 *            The port of the downstream connection to use.
+	 * @param upstreamPort
+	 *            The port of the upstream connection to use.
+	 * @param versionString
+	 *            The version string to use during connection. Note that this
+	 *            must match the server side <i>major</i> version.
+	 * @param userName
+	 *            The user name to use whilst identifying on the server.
+	 * @param tankColorRed
+	 *            The amount of "red" for the tank color, should be between
+	 *            0-255.
+	 * @param tankColorGreen
+	 *            The amount of "green" for the tank color, should be between
+	 *            0-255.
+	 * @param tankColorBlue
+	 *            The amount of "blue" for the tank color, should be between
+	 *            0-255.
 	 */
 	public Dispatcher(String remoteHost, int downstreamPort, int upstreamPort,
 			String versionString, String userName, int tankColorRed,
@@ -113,11 +126,43 @@ public class Dispatcher {
 			// parse response
 			JSONObject initialGameState = new JSONObject(
 					connectDownstreamResponse).getJSONObject("welcomeToGame");
-			System.out.println("DEBUG: Entered game: "
+			System.out.println("DEBUG: Welcome to game: "
 					+ initialGameState.toString());
 
 			while (true) {
 
+				String tempCommand = new JSONObject().put("moveForwardWithSpeed","0.5").toString();
+				System.out.println("DEBUG: sent command: " + tempCommand);
+				upstreamOutput.write(tempCommand);
+				upstreamOutput.newLine();
+				upstreamOutput.flush();
+				
+				String rawReturnMessage = upstreamInput.readLine();
+				System.out.println("DEBUG: return message: " + rawReturnMessage);
+				
+
+				tempCommand = new JSONObject().put("rotateTank","180").toString();
+				System.out.println("DEBUG: sent command: " + tempCommand);
+				upstreamOutput.write(tempCommand);
+				upstreamOutput.newLine();
+				upstreamOutput.flush();
+				
+				rawReturnMessage = upstreamInput.readLine();
+				System.out.println("DEBUG: return message: " + rawReturnMessage);
+				
+				tempCommand = new JSONObject().put("rotateTurret","180").toString();
+				System.out.println("DEBUG: sent command: " + tempCommand);
+				upstreamOutput.write(tempCommand);
+				upstreamOutput.newLine();
+				upstreamOutput.flush();
+				
+				rawReturnMessage = upstreamInput.readLine();
+				System.out.println("DEBUG: return message: " + rawReturnMessage);
+				
+				
+
+				/* this code does not yet work in 0.2.0
+				
 				// listen for input (blocking)
 				String rawContext = downstreamInput.readLine();
 				System.out.println("DEBUG: Recieved context: " + rawContext);
@@ -134,8 +179,10 @@ public class Dispatcher {
 
 				// send command
 				upstreamOutput.write(JSONcommand.toString());
-				System.out.println("DEBUG: Sent command: " + JSONcommand.toString());
+				System.out.println("DEBUG: Sent command: "
+						+ JSONcommand.toString());
 
+				*/
 			}
 
 		} catch (IOException e) {
@@ -154,9 +201,11 @@ public class Dispatcher {
 
 		JSONObject connectUpstreamChannelMessageContents = new JSONObject();
 		connectUpstreamChannelMessageContents.put("asUser", userName);
+		// TODO: implement new 0.2.0 color structure
 		connectUpstreamChannelMessageContents.put("withTankColor", ""
 				+ tankColorRed + "," + tankColorGreen + "," + tankColorBlue
 				+ "");
+		// TODO: implement new 0.2.0 protocol version structure
 		connectUpstreamChannelMessageContents.put("usingProtocolVersion",
 				versionString);
 		return new JSONObject().put("connect",
@@ -170,6 +219,7 @@ public class Dispatcher {
 			String versionString2) throws JSONException {
 		JSONObject connectDownstreamChannelMessageContents = new JSONObject();
 		connectDownstreamChannelMessageContents.put("asUserWithUID", UID);
+		// TODO: implement new 0.2.0 protocol version structure
 		connectDownstreamChannelMessageContents.put("usingProtocolVersion",
 				versionString);
 		return new JSONObject().put("connect",
