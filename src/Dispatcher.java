@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -146,7 +145,7 @@ public class Dispatcher {
 	}
 
 	/*
-	 * Build the JSONObject which is sent up the initial connection upstream
+	 * Builds the JSONObject which is sent up the initial connection upstream
 	 */
 	private JSONObject buildConnectUpstreamChannelMessage(String userName,
 			int tankColorRed, int tankColorGreen, int tankColorBlue,
@@ -164,7 +163,7 @@ public class Dispatcher {
 	}
 
 	/*
-	 * Build the JSONObject which is sent up the initial connection downstream
+	 * Builds the JSONObject which is sent up the initial connection downstream
 	 */
 	private JSONObject buildConnectDownstreamChannelMessage(int UID,
 			String versionString2) throws JSONException {

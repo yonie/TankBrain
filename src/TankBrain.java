@@ -10,7 +10,7 @@ public class TankBrain {
 	static final int tankColorBlue = 20;
 
 	public static void main(String[] args) {
-		System.out.println("DEBUG: Begin... ");
+		System.out.println("DEBUG: Begin...");
 		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort,
 				upstreamPort, versionString, userName, tankColorRed,
 				tankColorGreen, tankColorBlue);

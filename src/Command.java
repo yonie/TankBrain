@@ -2,32 +2,31 @@ public class Command {
 	private String command;
 	private String param;
 	
-	/*
-	 * { "moveForwardWithSpeed": 1.0 // [0.0 - 1.0] }
+	/**
+	 * A Command is used to store any command sent to the server. 
 	 * 
-	 * { "moveBackwardWithSpeed": 0.5 // [0.0 - 1.0] }
-	 * 
-	 * { "moveWithSpeed": -0.75 // [-1.0 - 1.0] }
-	 * 
-	 * { "rotateTank": 60.0 // [-359.0 - 359.0] }
-	 * 
-	 * { "rotateTurret": -60.0 // [-359.0 - 359.0] }
-	 * 
-	 * { "rotateTurretToRelativeAngle": 30.0 // [0.0 - 359.0] }
-	 * 
-	 * { "stop": "tankRotation" // ["tankRotation", "turretRotation", "moving",
-	 * "scanning"] }
+	 * @param command The first hand of the command.
+	 * @param param The second hand of the command.
 	 */
-	
 	public Command(String command, String param) {
 		this.command = command;
 		this.param = param;
 	}
 	
+	/**
+	 * Returns the first hand of the command. 
+	 * 
+	 * @return The first hand of the command. 
+	 */
 	public String getCommand() {
 		return command;
 	}
 
+	/**
+	 * Returns the second hand of the command 
+	 * 
+	 * @return The second hand of the command.
+	 */
 	public String getParam() {
 		return param;
 	}
