@@ -3,7 +3,7 @@ public class Command {
 	private String param;
 	
 	/**
-	 * A Command is used to store any command sent to the server. 
+	 * A Command is used to store any command that is sent to the server. 
 	 * 
 	 * @param command The first hand of the command.
 	 * @param param The second hand of the command.
