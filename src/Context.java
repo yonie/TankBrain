@@ -8,6 +8,11 @@ public class Context {
 
 	// TODO: private Tank[] tanksNearby;
 
+	/**
+	 * The Context stores all the tank contextual information, meaning location, direction, any objects or other Tanks nearby. 
+	 * 
+	 * @param JSONcontext
+	 */
 	public Context(JSONObject JSONcontext) {
 		try {
 			ownTank = new Tank(JSONcontext.getJSONArray("position").getInt(0),
