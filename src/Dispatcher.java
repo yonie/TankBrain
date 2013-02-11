@@ -131,6 +131,8 @@ public class Dispatcher {
 
 			while (true) {
 
+				// INFO: temp code to work with the 0.2.0 version
+				
 				String tempCommand = new JSONObject().put("moveForwardWithSpeed","0.5").toString();
 				System.out.println("DEBUG: sent command: " + tempCommand);
 				upstreamOutput.write(tempCommand);
