@@ -16,7 +16,9 @@ public class Dispatcher {
 	String remoteHost;
 	int downstreamPort;
 	int upstreamPort;
-	String versionString;
+	int majorVersion;
+	int minorVersion;
+	int revisionVersion;
 	String userName;
 	int tankColorRed;
 	int tankColorGreen;
@@ -32,9 +34,15 @@ public class Dispatcher {
 	 *            The port of the downstream connection to use.
 	 * @param upstreamPort
 	 *            The port of the upstream connection to use.
-	 * @param versionString
-	 *            The version string to use during connection. Note that this
-	 *            must match the server side <i>major</i> version.
+	 * @param majorVersion
+	 *            The major version string to use during connection. Note that
+	 *            this must match the server side <i>major</i> version.
+	 * @param minorVersion
+	 *            The minor version string to use during connection. Note that
+	 *            this must match the server side <i>major</i> version.
+	 * @param revisionVersion
+	 *            The revision version string to use during connection. Note
+	 *            that this must match the server side <i>major</i> version.
 	 * @param userName
 	 *            The user name to use whilst identifying on the server.
 	 * @param tankColorRed
@@ -48,14 +56,17 @@ public class Dispatcher {
 	 *            0-255.
 	 */
 	public Dispatcher(String remoteHost, int downstreamPort, int upstreamPort,
-			String versionString, String userName, int tankColorRed,
-			int tankColorGreen, int tankColorBlue) {
+			int majorVersion, int minorVersion, int revisionVersion,
+			String userName, int tankColorRed, int tankColorGreen,
+			int tankColorBlue) {
 		this.remoteHost = remoteHost;
 		this.downstreamPort = downstreamPort;
 		assert (downstreamPort < 65536);
 		this.upstreamPort = upstreamPort;
 		assert (upstreamPort < 65536);
-		this.versionString = versionString;
+		this.majorVersion = majorVersion;
+		this.minorVersion = minorVersion;
+		this.revisionVersion = revisionVersion;
 		this.userName = userName;
 		this.tankColorRed = tankColorRed;
 		this.tankColorGreen = tankColorGreen;
@@ -75,7 +86,7 @@ public class Dispatcher {
 			// build connect upstream channel message
 			JSONObject connectUpstreamChannelMessage = buildConnectUpstreamChannelMessage(
 					userName, tankColorRed, tankColorGreen, tankColorBlue,
-					versionString);
+					majorVersion, minorVersion, revisionVersion);
 
 			// send connect upstream message
 			System.out.println("DEBUG: Connecting upstream: "
@@ -108,7 +119,7 @@ public class Dispatcher {
 
 			// build connect downstream channel message
 			JSONObject connectDownstreamChannelMessage = buildConnectDownstreamChannelMessage(
-					UID, versionString);
+					UID, majorVersion, minorVersion, revisionVersion);
 
 			// send connect downstream message
 			System.out.println("DEBUG: Connecting downstream: "
@@ -132,59 +143,60 @@ public class Dispatcher {
 			while (true) {
 
 				// INFO: temp code to work with the 0.2.0 version
-				
-				String tempCommand = new JSONObject().put("moveForwardWithSpeed","0.5").toString();
+
+				String tempCommand = new JSONObject().put(
+						"moveForwardWithSpeed", "0.5").toString();
 				System.out.println("DEBUG: sent command: " + tempCommand);
 				upstreamOutput.write(tempCommand);
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
-				
+
 				String rawReturnMessage = upstreamInput.readLine();
-				System.out.println("DEBUG: return message: " + rawReturnMessage);
-				
+				System.out
+						.println("DEBUG: return message: " + rawReturnMessage);
 
-				tempCommand = new JSONObject().put("rotateTank","180").toString();
+				tempCommand = new JSONObject().put("rotateTank", "180")
+						.toString();
 				System.out.println("DEBUG: sent command: " + tempCommand);
 				upstreamOutput.write(tempCommand);
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
-				
+
 				rawReturnMessage = upstreamInput.readLine();
-				System.out.println("DEBUG: return message: " + rawReturnMessage);
-				
-				tempCommand = new JSONObject().put("rotateTurret","180").toString();
+				System.out
+						.println("DEBUG: return message: " + rawReturnMessage);
+
+				tempCommand = new JSONObject().put("rotateTurret", "180")
+						.toString();
 				System.out.println("DEBUG: sent command: " + tempCommand);
 				upstreamOutput.write(tempCommand);
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
-				
+
 				rawReturnMessage = upstreamInput.readLine();
-				System.out.println("DEBUG: return message: " + rawReturnMessage);
-				
-				
+				System.out
+						.println("DEBUG: return message: " + rawReturnMessage);
 
-				/* this code does not yet work in 0.2.0
-				
-				// listen for input (blocking)
-				String rawContext = downstreamInput.readLine();
-				System.out.println("DEBUG: Recieved context: " + rawContext);
-
-				// parse object out of JSON context
-				Context context = new Context(new JSONObject(rawContext));
-
-				// process context and get command
-				Command command = processor.processContext(context);
-
-				// make command into JSONObject
-				JSONObject JSONcommand = new JSONObject().put(
-						command.getCommand(), command.getParam());
-
-				// send command
-				upstreamOutput.write(JSONcommand.toString());
-				System.out.println("DEBUG: Sent command: "
-						+ JSONcommand.toString());
-
-				*/
+				/*
+				 * this code does not yet work in 0.2.0
+				 * 
+				 * // listen for input (blocking) String rawContext =
+				 * downstreamInput.readLine();
+				 * System.out.println("DEBUG: Recieved context: " + rawContext);
+				 * 
+				 * // parse object out of JSON context Context context = new
+				 * Context(new JSONObject(rawContext));
+				 * 
+				 * // process context and get command Command command =
+				 * processor.processContext(context);
+				 * 
+				 * // make command into JSONObject JSONObject JSONcommand = new
+				 * JSONObject().put( command.getCommand(), command.getParam());
+				 * 
+				 * // send command upstreamOutput.write(JSONcommand.toString());
+				 * System.out.println("DEBUG: Sent command: " +
+				 * JSONcommand.toString());
+				 */
 			}
 
 		} catch (IOException e) {
@@ -199,7 +211,7 @@ public class Dispatcher {
 	 */
 	private JSONObject buildConnectUpstreamChannelMessage(String userName,
 			int tankColorRed, int tankColorGreen, int tankColorBlue,
-			String versionString) throws JSONException {
+			int majorVersion, int minorVersion, int revisionVersion) throws JSONException {
 
 		JSONObject connectUpstreamChannelMessageContents = new JSONObject();
 		connectUpstreamChannelMessageContents.put("asUser", userName);
@@ -207,9 +219,11 @@ public class Dispatcher {
 		connectUpstreamChannelMessageContents.put("withTankColor", ""
 				+ tankColorRed + "," + tankColorGreen + "," + tankColorBlue
 				+ "");
-		// TODO: implement new 0.2.0 protocol version structure
+		JSONObject protocolVersion = new JSONObject()
+				.put("major", majorVersion).put("minor", minorVersion)
+				.put("revision", revisionVersion);
 		connectUpstreamChannelMessageContents.put("usingProtocolVersion",
-				versionString);
+				protocolVersion);
 		return new JSONObject().put("connect",
 				connectUpstreamChannelMessageContents);
 	}
@@ -218,12 +232,15 @@ public class Dispatcher {
 	 * Build the JSONObject which is sent up the initial connection downstream
 	 */
 	private JSONObject buildConnectDownstreamChannelMessage(int UID,
-			String versionString2) throws JSONException {
+			int majorVersion, int minorVersion, int revisionVersion)
+			throws JSONException {
 		JSONObject connectDownstreamChannelMessageContents = new JSONObject();
 		connectDownstreamChannelMessageContents.put("asUserWithUID", UID);
-		// TODO: implement new 0.2.0 protocol version structure
+		JSONObject protocolVersion = new JSONObject()
+				.put("major", majorVersion).put("minor", minorVersion)
+				.put("revision", revisionVersion);
 		connectDownstreamChannelMessageContents.put("usingProtocolVersion",
-				versionString);
+				protocolVersion);
 		return new JSONObject().put("connect",
 				connectDownstreamChannelMessageContents);
 	}

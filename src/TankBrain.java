@@ -10,12 +10,14 @@ public class TankBrain {
 	static final int upstreamPort = 1359;
 	
 	// version string 
-	static final String versionString = "0.1.0";
+	static final int majorVersion = 0;
+	static final int minorVersion = 2;
+	static final int revisionVersion = 0;
 	
 	// the user name to log on to the system
 	static final String userName = "Ronald";
 	
-	// tank color
+	// tank colors
 	static final int tankColorRed = 20;
 	static final int tankColorGreen = 20;
 	static final int tankColorBlue = 20;
@@ -23,7 +25,7 @@ public class TankBrain {
 	public static void main(String[] args) {
 		System.out.println("DEBUG: Begin...");
 		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort,
-				upstreamPort, versionString, userName, tankColorRed,
+				upstreamPort, majorVersion, minorVersion, revisionVersion, userName, tankColorRed,
 				tankColorGreen, tankColorBlue);
 		System.out.println("DEBUG: End.");
 	}
