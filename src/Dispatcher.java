@@ -11,18 +11,17 @@ import org.json.JSONObject;
 
 public class Dispatcher {
 
-	Processor processor;
-
-	String remoteHost;
-	int downstreamPort;
-	int upstreamPort;
-	int majorVersion;
-	int minorVersion;
-	int revisionVersion;
-	String userName;
-	int tankColorRed;
-	int tankColorGreen;
-	int tankColorBlue;
+	private Processor processor;
+	private String remoteHost;
+	private int downstreamPort;
+	private int upstreamPort;
+	private int majorVersion;
+	private int minorVersion;
+	private int revisionVersion;
+	private String userName;
+	private int tankColorRed;
+	private int tankColorGreen;
+	private int tankColorBlue;
 
 	/**
 	 * The Dispatcher sets up connectivity and runs the main thread keeping
@@ -71,8 +70,6 @@ public class Dispatcher {
 		this.tankColorRed = tankColorRed;
 		this.tankColorGreen = tankColorGreen;
 		this.tankColorBlue = tankColorBlue;
-
-		processor = new Processor();
 
 		try {
 
@@ -140,63 +137,41 @@ public class Dispatcher {
 			System.out.println("DEBUG: Welcome to game: "
 					+ initialGameState.toString());
 
+			JSONObject rules = initialGameState.getJSONObject("rules");
+			processor = new Processor(rules.getInt("moveSpeed"),
+					rules.getInt("rotationSpeed"),
+					rules.getInt("turretRotationSpeed"),
+					rules.getInt("fireInterval"),
+					rules.getInt("ballisticsTravelSpeed"),
+					rules.getInt("fieldOfView"),
+					rules.getInt("turretFieldOfView"), rules.getInt("hp"),
+					rules.getInt("ballisticDamage"),
+					rules.getInt("enemyHitScore"),
+					rules.getInt("enemyKillScore"));
+
 			while (true) {
 
-				// INFO: temp code to work with the 0.2.0 version
+				// listen for input (blocking)
+				String rawContext = downstreamInput.readLine();
+				System.out.println("DEBUG: Recieved context: " + rawContext);
 
-				String tempCommand = new JSONObject().put(
-						"moveForwardWithSpeed", "0.5").toString();
-				System.out.println("DEBUG: sent command: " + tempCommand);
-				upstreamOutput.write(tempCommand);
+				// parse context object out of raw JSON context
+				Context context = new Context(new JSONObject(rawContext));
+
+				// process context and get next command
+				Command command = processor.processContext(context);
+
+				// put command into JSONObject
+				JSONObject JSONcommand = new JSONObject().put(
+						command.getCommand(), command.getParam());
+
+				// send command
+				upstreamOutput.write(JSONcommand.toString());
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
+				System.out.println("DEBUG: Sent command: "
+						+ JSONcommand.toString());
 
-				String rawReturnMessage = upstreamInput.readLine();
-				System.out
-						.println("DEBUG: return message: " + rawReturnMessage);
-
-				tempCommand = new JSONObject().put("rotateTank", "180")
-						.toString();
-				System.out.println("DEBUG: sent command: " + tempCommand);
-				upstreamOutput.write(tempCommand);
-				upstreamOutput.newLine();
-				upstreamOutput.flush();
-
-				rawReturnMessage = upstreamInput.readLine();
-				System.out
-						.println("DEBUG: return message: " + rawReturnMessage);
-
-				tempCommand = new JSONObject().put("rotateTurret", "180")
-						.toString();
-				System.out.println("DEBUG: sent command: " + tempCommand);
-				upstreamOutput.write(tempCommand);
-				upstreamOutput.newLine();
-				upstreamOutput.flush();
-
-				rawReturnMessage = upstreamInput.readLine();
-				System.out
-						.println("DEBUG: return message: " + rawReturnMessage);
-
-				/*
-				 * this code does not yet work in 0.2.0
-				 * 
-				 * // listen for input (blocking) String rawContext =
-				 * downstreamInput.readLine();
-				 * System.out.println("DEBUG: Recieved context: " + rawContext);
-				 * 
-				 * // parse object out of JSON context Context context = new
-				 * Context(new JSONObject(rawContext));
-				 * 
-				 * // process context and get command Command command =
-				 * processor.processContext(context);
-				 * 
-				 * // make command into JSONObject JSONObject JSONcommand = new
-				 * JSONObject().put( command.getCommand(), command.getParam());
-				 * 
-				 * // send command upstreamOutput.write(JSONcommand.toString());
-				 * System.out.println("DEBUG: Sent command: " +
-				 * JSONcommand.toString());
-				 */
 			}
 
 		} catch (IOException e) {
@@ -211,7 +186,8 @@ public class Dispatcher {
 	 */
 	private JSONObject buildConnectUpstreamChannelMessage(String userName,
 			int tankColorRed, int tankColorGreen, int tankColorBlue,
-			int majorVersion, int minorVersion, int revisionVersion) throws JSONException {
+			int majorVersion, int minorVersion, int revisionVersion)
+			throws JSONException {
 
 		JSONObject connectUpstreamChannelMessageContents = new JSONObject();
 		connectUpstreamChannelMessageContents.put("asUser", userName);
