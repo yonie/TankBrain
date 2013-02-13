@@ -48,4 +48,8 @@ public class Context {
 		return isPerformingScan;
 	}
 
+	public boolean isRotating() {
+		return isRotating;
+	}
+
 }

@@ -11,6 +11,14 @@ import org.json.JSONObject;
 
 public class Dispatcher {
 
+	private Socket upstreamSocket;
+	private BufferedReader upstreamInput;
+	private BufferedWriter upstreamOutput;
+
+	private Socket downstreamSocket;
+	private BufferedReader downstreamInput;
+	private BufferedWriter downstreamOutput;
+
 	private Processor processor;
 	private String remoteHost;
 	private int downstreamPort;
@@ -72,9 +80,9 @@ public class Dispatcher {
 		try {
 
 			// set up upstream connection
-			Socket upstreamSocket = new Socket(remoteHost, upstreamPort);
-			BufferedReader upstreamInput = new BufferedReader(new InputStreamReader(upstreamSocket.getInputStream()));
-			BufferedWriter upstreamOutput = new BufferedWriter(new OutputStreamWriter(upstreamSocket.getOutputStream()));
+			upstreamSocket = new Socket(remoteHost, upstreamPort);
+			upstreamInput = new BufferedReader(new InputStreamReader(upstreamSocket.getInputStream()));
+			upstreamOutput = new BufferedWriter(new OutputStreamWriter(upstreamSocket.getOutputStream()));
 
 			// build connect upstream channel message
 			JSONObject connectUpstreamChannelMessage = buildConnectUpstreamChannelMessage(userName, tankColorRed,
@@ -129,12 +137,14 @@ public class Dispatcher {
 			assert (rules != null);
 
 			// set up processor using initial game state rules
-			processor = new Processor(rules.getInt("moveSpeed"), rules.getInt("rotationSpeed"),
+			processor = new Processor(this, rules.getInt("moveSpeed"), rules.getInt("rotationSpeed"),
 					rules.getInt("turretRotationSpeed"), rules.getInt("fireInterval"),
 					rules.getInt("ballisticsTravelSpeed"), rules.getInt("fieldOfView"),
 					rules.getInt("turretFieldOfView"), rules.getInt("hp"), rules.getInt("ballisticDamage"),
 					rules.getInt("enemyHitScore"), rules.getInt("enemyKillScore"));
 
+			processor.start();
+			
 			while (true) {
 
 				// listen for input (blocking)
@@ -144,48 +154,55 @@ public class Dispatcher {
 				// parse context object out of raw JSON context
 				Context context = new Context(new JSONObject(rawContext).getJSONObject("tankStatusUpdate"));
 
-				// process context and get next command
-				Command command = processor.processContext(context);
-
-				// put command into JSONObject
-				JSONObject jsonCommand = new JSONObject().put(command.getCommand(), command.getParam());
-
-				// send command
-				upstreamOutput.write(jsonCommand.toString());
-				upstreamOutput.newLine();
-				upstreamOutput.flush();
-				System.out.println("DEBUG: Sent command: " + jsonCommand.toString());
-
-				// get command ack
-				JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
-				if (jsonCommandAck.has("errorOccurred")) {
-
-					System.out.println("DEBUG: Recieved an error: " + jsonCommandAck.toString());
-
-					// build error
-					CommandExecutionError error = new CommandExecutionError(jsonCommandAck.getJSONObject(
-							"errorOccurred").getString("whileExecutingCommand"), jsonCommandAck.getJSONObject(
-							"errorOccurred").getString("withReason"));
-
-					// process error and get new command
-					Command newCommand = processor.processError(error);
-
-					// put command into JSONObject
-					JSONObject jsonNewCommand = new JSONObject().put(newCommand.getCommand(), newCommand.getParam());
-
-					// send command
-					upstreamOutput.write(jsonNewCommand.toString());
-					upstreamOutput.newLine();
-					upstreamOutput.flush();
-					System.out.println("DEBUG: Sent new command: " + jsonNewCommand.toString());
-
-				}
+				// process context
+				processor.processContext(context);
 
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		
+		// make sure the threaded processor will stop
+		processor.setRunning(false);
+	}
+
+	public void sendCommand(Command command) {
+
+		try {
+
+			// put command into JSONObject
+			JSONObject jsonCommand = new JSONObject().put(command.getCommand(), command.getParam());
+
+			// send command upstream
+			upstreamOutput.write(jsonCommand.toString());
+			upstreamOutput.newLine();
+			upstreamOutput.flush();
+			System.out.println("DEBUG: Sent command: " + jsonCommand.toString());
+
+			// get command ack
+			JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
+			if (jsonCommandAck.has("errorOccurred")) {
+
+				System.out.println("DEBUG: Recieved an error: " + jsonCommandAck.toString());
+
+				// build error
+				CommandExecutionError error = new CommandExecutionError(jsonCommandAck.getJSONObject("errorOccurred")
+						.getString("whileExecutingCommand"), jsonCommandAck.getJSONObject("errorOccurred").getString(
+						"withReason"));
+
+				// process error
+				processor.processError(error);
+
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

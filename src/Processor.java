@@ -1,5 +1,7 @@
-public class Processor {
+public class Processor extends Thread {
 
+	private Dispatcher dispatcher;
+	private boolean running;
 	private int moveSpeed;
 	private int rotationSpeed;
 	private int turretRotationSpeed;
@@ -16,9 +18,10 @@ public class Processor {
 	/**
 	 * @param args
 	 */
-	public Processor(int moveSpeed, int rotationSpeed, int turretRotationSpeed, int fireInterval,
-			int ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints, int ballisticDamage,
-			int enemyHitScore, int enemyKillScore) {
+	public Processor(Dispatcher dispatcher, int moveSpeed, int rotationSpeed, int turretRotationSpeed,
+			int fireInterval, int ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints,
+			int ballisticDamage, int enemyHitScore, int enemyKillScore) {
+		this.dispatcher = dispatcher;
 		this.moveSpeed = moveSpeed;
 		this.rotationSpeed = rotationSpeed;
 		this.turretRotationSpeed = turretRotationSpeed;
@@ -30,30 +33,41 @@ public class Processor {
 		this.ballisticDamage = ballisticDamage;
 		this.enemyHitScore = enemyHitScore;
 		this.enemyKillScore = enemyKillScore;
+		this.running = true;
 	}
 
-	public Command processContext(Context context) {
+	public void processContext(Context context) {
 
-		// update private stats based on context
+		// TODO: update private stats based on context
 
-		// update heatmap
+		// TODO: update heatmap
+
+	}
+	
+	public void run() {
 
 		// TODO: insert fancy tank ops here
-		if (this.moveSpeed < 1) {
-			return new Command("moveForwardWithSpeed", "1.0");
-		} else
-			return new Command("rotateTank", "45");
+
+		System.out.println("DEBUG: running the thread...");
+		while (running) {
+			try {
+				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
+				dispatcher.sendCommand(new Command("rotateTank", "125"));
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
-	public Command processError(CommandExecutionError error) {
+	public void processError(CommandExecutionError error) {
 
 		// TODO: do some fancy error handling here
 
-		if (this.moveSpeed > -1)
-			return new Command("moveBackwardWithSpeed", "1.0");
-		else
-			return new Command("rotateTank", "-90");
+	}
 
+	public void setRunning(Boolean running) {
+		this.running = running;
 	}
 
 }
