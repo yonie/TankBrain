@@ -11,6 +11,7 @@ public class Processor {
 	private int ballisticDamage;
 	private int enemyHitScore;
 	private int enemyKillScore;
+	private int[] heatMap;
 
 	/**
 	 * @param args
@@ -33,11 +34,26 @@ public class Processor {
 	}
 
 	public Command processContext(Context context) {
+
+		// update private stats based on context
+
+		// update heatmap
+
 		// TODO: insert fancy tank ops here
-		if (!context.isMoving()) {
+		if (this.moveSpeed < 1) {
 			return new Command("moveForwardWithSpeed", "1.0");
 		} else
 			return new Command("rotateTank", "45");
+	}
+
+	public Command processError(CommandExecutionError error) {
+
+		// TODO: do some fancy error handling here
+
+		if (this.moveSpeed > -1)
+			return new Command("moveBackwardWithSpeed", "1.0");
+		else return new Command("rotateTank", "-90");
+		
 	}
 
 }

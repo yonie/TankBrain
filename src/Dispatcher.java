@@ -162,15 +162,47 @@ public class Dispatcher {
 				Command command = processor.processContext(context);
 
 				// put command into JSONObject
-				JSONObject JSONcommand = new JSONObject().put(
+				JSONObject jsonCommand = new JSONObject().put(
 						command.getCommand(), command.getParam());
 
 				// send command
-				upstreamOutput.write(JSONcommand.toString());
+				upstreamOutput.write(jsonCommand.toString());
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
 				System.out.println("DEBUG: Sent command: "
-						+ JSONcommand.toString());
+						+ jsonCommand.toString());
+
+				// get command ack
+				JSONObject jsonCommandAck = new JSONObject(
+						upstreamInput.readLine());
+				JSONObject jsonErrorResponse = jsonCommandAck
+						.getJSONObject("errorOccurred");
+				if (jsonErrorResponse != null) {
+					
+					System.out.println("DEBUG: Recieved an error: "
+							+ jsonErrorResponse.toString());
+
+					// build error
+					CommandExecutionError error = new CommandExecutionError(
+							jsonErrorResponse
+									.getString("whileExecutingCommand"),
+							jsonErrorResponse.getString("withReason"));
+					
+					// process error and get new command
+					Command newCommand = processor.processError(error);
+					
+					// put command into JSONObject
+					JSONObject jsonNewCommand = new JSONObject().put(
+							newCommand.getCommand(), newCommand.getParam());
+
+					// send command
+					upstreamOutput.write(jsonNewCommand.toString());
+					upstreamOutput.newLine();
+					upstreamOutput.flush();
+					System.out.println("DEBUG: Sent new command: "
+							+ jsonNewCommand.toString());
+
+				}
 
 			}
 
