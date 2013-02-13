@@ -54,10 +54,8 @@ public class Dispatcher {
 	 *            The amount of "blue" for the tank color, should be between
 	 *            0-255.
 	 */
-	public Dispatcher(String remoteHost, int downstreamPort, int upstreamPort,
-			int majorVersion, int minorVersion, int revisionVersion,
-			String userName, int tankColorRed, int tankColorGreen,
-			int tankColorBlue) {
+	public Dispatcher(String remoteHost, int downstreamPort, int upstreamPort, int majorVersion, int minorVersion,
+			int revisionVersion, String userName, int tankColorRed, int tankColorGreen, int tankColorBlue) {
 		this.remoteHost = remoteHost;
 		this.downstreamPort = downstreamPort;
 		assert (downstreamPort < 65536);
@@ -75,19 +73,15 @@ public class Dispatcher {
 
 			// set up upstream connection
 			Socket upstreamSocket = new Socket(remoteHost, upstreamPort);
-			BufferedReader upstreamInput = new BufferedReader(
-					new InputStreamReader(upstreamSocket.getInputStream()));
-			BufferedWriter upstreamOutput = new BufferedWriter(
-					new OutputStreamWriter(upstreamSocket.getOutputStream()));
+			BufferedReader upstreamInput = new BufferedReader(new InputStreamReader(upstreamSocket.getInputStream()));
+			BufferedWriter upstreamOutput = new BufferedWriter(new OutputStreamWriter(upstreamSocket.getOutputStream()));
 
 			// build connect upstream channel message
-			JSONObject connectUpstreamChannelMessage = buildConnectUpstreamChannelMessage(
-					userName, tankColorRed, tankColorGreen, tankColorBlue,
-					majorVersion, minorVersion, revisionVersion);
+			JSONObject connectUpstreamChannelMessage = buildConnectUpstreamChannelMessage(userName, tankColorRed,
+					tankColorGreen, tankColorBlue, majorVersion, minorVersion, revisionVersion);
 
 			// send connect upstream message
-			System.out.println("DEBUG: Connecting upstream: "
-					+ connectUpstreamChannelMessage.toString());
+			System.out.println("DEBUG: Connecting upstream: " + connectUpstreamChannelMessage.toString());
 			upstreamOutput.write(connectUpstreamChannelMessage.toString());
 			upstreamOutput.newLine();
 			upstreamOutput.flush();
@@ -95,32 +89,28 @@ public class Dispatcher {
 			// get response
 			System.out.println("DEBUG: Awaiting response...");
 			String connectUpstreamResponse = upstreamInput.readLine();
-			System.out.println("DEBUG: Got response: "
-					+ connectUpstreamResponse);
+			System.out.println("DEBUG: Got response: " + connectUpstreamResponse);
 
 			// parse response
-			JSONObject connectUpstreamResponseJSON = new JSONObject(
-					connectUpstreamResponse);
-			int UID = connectUpstreamResponseJSON.getJSONObject(
-					"connectionAccepted").getInt("withUID");
-			String returnedUserName = connectUpstreamResponseJSON
-					.getJSONObject("connectionAccepted").getString("forUser");
-			assert (userName == returnedUserName);
+			JSONObject connectionAcceptedJSON = new JSONObject(connectUpstreamResponse)
+					.getJSONObject("connectionAccepted");
+			int UID = connectionAcceptedJSON.getInt("withUID");
+			String returnedUserName = connectionAcceptedJSON.getString("forUser");
+			assert (returnedUserName == userName && UID > 0);
 
 			// set up downstream connection
 			Socket downstreamSocket = new Socket(remoteHost, downstreamPort);
 			BufferedReader downstreamInput = new BufferedReader(
 					new InputStreamReader(downstreamSocket.getInputStream()));
-			BufferedWriter downstreamOutput = new BufferedWriter(
-					new OutputStreamWriter(downstreamSocket.getOutputStream()));
+			BufferedWriter downstreamOutput = new BufferedWriter(new OutputStreamWriter(
+					downstreamSocket.getOutputStream()));
 
 			// build connect downstream channel message
-			JSONObject connectDownstreamChannelMessage = buildConnectDownstreamChannelMessage(
-					UID, majorVersion, minorVersion, revisionVersion);
+			JSONObject connectDownstreamChannelMessage = buildConnectDownstreamChannelMessage(UID, majorVersion,
+					minorVersion, revisionVersion);
 
 			// send connect downstream message
-			System.out.println("DEBUG: Connecting downstream: "
-					+ connectDownstreamChannelMessage.toString());
+			System.out.println("DEBUG: Connecting downstream: " + connectDownstreamChannelMessage.toString());
 			downstreamOutput.write(connectDownstreamChannelMessage.toString());
 			downstreamOutput.newLine();
 			downstreamOutput.flush();
@@ -128,26 +118,22 @@ public class Dispatcher {
 			// get response
 			System.out.println("DEBUG: Awaiting response...");
 			String connectDownstreamResponse = downstreamInput.readLine();
-			System.out.println("DEBUG: Got response: "
-					+ connectDownstreamResponse);
+			System.out.println("DEBUG: Got response: " + connectDownstreamResponse);
 
-			// parse response
-			JSONObject initialGameState = new JSONObject(
-					connectDownstreamResponse).getJSONObject("welcomeToGame");
-			System.out.println("DEBUG: Welcome to game: "
-					+ initialGameState.toString());
+			// parse connect response and fetch initial game state
+			JSONObject initialGameState = new JSONObject(connectDownstreamResponse).getJSONObject("welcomeToGame");
+			System.out.println("DEBUG: Welcome to game: " + initialGameState.toString());
 
+			// fetch rules object from initial game state
 			JSONObject rules = initialGameState.getJSONObject("rules");
-			processor = new Processor(rules.getInt("moveSpeed"),
-					rules.getInt("rotationSpeed"),
-					rules.getInt("turretRotationSpeed"),
-					rules.getInt("fireInterval"),
-					rules.getInt("ballisticsTravelSpeed"),
-					rules.getInt("fieldOfView"),
-					rules.getInt("turretFieldOfView"), rules.getInt("hp"),
-					rules.getInt("ballisticDamage"),
-					rules.getInt("enemyHitScore"),
-					rules.getInt("enemyKillScore"));
+			assert (rules != null);
+
+			// set up processor using initial game state rules
+			processor = new Processor(rules.getInt("moveSpeed"), rules.getInt("rotationSpeed"),
+					rules.getInt("turretRotationSpeed"), rules.getInt("fireInterval"),
+					rules.getInt("ballisticsTravelSpeed"), rules.getInt("fieldOfView"),
+					rules.getInt("turretFieldOfView"), rules.getInt("hp"), rules.getInt("ballisticDamage"),
+					rules.getInt("enemyHitScore"), rules.getInt("enemyKillScore"));
 
 			while (true) {
 
@@ -156,51 +142,42 @@ public class Dispatcher {
 				System.out.println("DEBUG: Recieved context: " + rawContext);
 
 				// parse context object out of raw JSON context
-				Context context = new Context(new JSONObject(rawContext));
+				Context context = new Context(new JSONObject(rawContext).getJSONObject("tankStatusUpdate"));
 
 				// process context and get next command
 				Command command = processor.processContext(context);
 
 				// put command into JSONObject
-				JSONObject jsonCommand = new JSONObject().put(
-						command.getCommand(), command.getParam());
+				JSONObject jsonCommand = new JSONObject().put(command.getCommand(), command.getParam());
 
 				// send command
 				upstreamOutput.write(jsonCommand.toString());
 				upstreamOutput.newLine();
 				upstreamOutput.flush();
-				System.out.println("DEBUG: Sent command: "
-						+ jsonCommand.toString());
+				System.out.println("DEBUG: Sent command: " + jsonCommand.toString());
 
 				// get command ack
-				JSONObject jsonCommandAck = new JSONObject(
-						upstreamInput.readLine());
-				JSONObject jsonErrorResponse = jsonCommandAck
-						.getJSONObject("errorOccurred");
-				if (jsonErrorResponse != null) {
-					
-					System.out.println("DEBUG: Recieved an error: "
-							+ jsonErrorResponse.toString());
+				JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
+				if (jsonCommandAck.has("errorOccurred")) {
+
+					System.out.println("DEBUG: Recieved an error: " + jsonCommandAck.toString());
 
 					// build error
-					CommandExecutionError error = new CommandExecutionError(
-							jsonErrorResponse
-									.getString("whileExecutingCommand"),
-							jsonErrorResponse.getString("withReason"));
-					
+					CommandExecutionError error = new CommandExecutionError(jsonCommandAck.getJSONObject(
+							"errorOccurred").getString("whileExecutingCommand"), jsonCommandAck.getJSONObject(
+							"errorOccurred").getString("withReason"));
+
 					// process error and get new command
 					Command newCommand = processor.processError(error);
-					
+
 					// put command into JSONObject
-					JSONObject jsonNewCommand = new JSONObject().put(
-							newCommand.getCommand(), newCommand.getParam());
+					JSONObject jsonNewCommand = new JSONObject().put(newCommand.getCommand(), newCommand.getParam());
 
 					// send command
 					upstreamOutput.write(jsonNewCommand.toString());
 					upstreamOutput.newLine();
 					upstreamOutput.flush();
-					System.out.println("DEBUG: Sent new command: "
-							+ jsonNewCommand.toString());
+					System.out.println("DEBUG: Sent new command: " + jsonNewCommand.toString());
 
 				}
 
@@ -216,41 +193,31 @@ public class Dispatcher {
 	/*
 	 * Build the JSONObject which is sent up the initial connection upstream
 	 */
-	private JSONObject buildConnectUpstreamChannelMessage(String userName,
-			int tankColorRed, int tankColorGreen, int tankColorBlue,
-			int majorVersion, int minorVersion, int revisionVersion)
-			throws JSONException {
+	private JSONObject buildConnectUpstreamChannelMessage(String userName, int tankColorRed, int tankColorGreen,
+			int tankColorBlue, int majorVersion, int minorVersion, int revisionVersion) throws JSONException {
 
 		JSONObject connectUpstreamChannelMessageContents = new JSONObject();
 		connectUpstreamChannelMessageContents.put("asUser", userName);
 		// TODO: implement new 0.2.0 color structure
-		connectUpstreamChannelMessageContents.put("withTankColor", ""
-				+ tankColorRed + "," + tankColorGreen + "," + tankColorBlue
-				+ "");
-		JSONObject protocolVersion = new JSONObject()
-				.put("major", majorVersion).put("minor", minorVersion)
+		connectUpstreamChannelMessageContents.put("withTankColor", "" + tankColorRed + "," + tankColorGreen + ","
+				+ tankColorBlue + "");
+		JSONObject protocolVersion = new JSONObject().put("major", majorVersion).put("minor", minorVersion)
 				.put("revision", revisionVersion);
-		connectUpstreamChannelMessageContents.put("usingProtocolVersion",
-				protocolVersion);
-		return new JSONObject().put("connect",
-				connectUpstreamChannelMessageContents);
+		connectUpstreamChannelMessageContents.put("usingProtocolVersion", protocolVersion);
+		return new JSONObject().put("connect", connectUpstreamChannelMessageContents);
 	}
 
 	/*
 	 * Build the JSONObject which is sent up the initial connection downstream
 	 */
-	private JSONObject buildConnectDownstreamChannelMessage(int UID,
-			int majorVersion, int minorVersion, int revisionVersion)
-			throws JSONException {
+	private JSONObject buildConnectDownstreamChannelMessage(int UID, int majorVersion, int minorVersion,
+			int revisionVersion) throws JSONException {
 		JSONObject connectDownstreamChannelMessageContents = new JSONObject();
 		connectDownstreamChannelMessageContents.put("asUserWithUID", UID);
-		JSONObject protocolVersion = new JSONObject()
-				.put("major", majorVersion).put("minor", minorVersion)
+		JSONObject protocolVersion = new JSONObject().put("major", majorVersion).put("minor", minorVersion)
 				.put("revision", revisionVersion);
-		connectDownstreamChannelMessageContents.put("usingProtocolVersion",
-				protocolVersion);
-		return new JSONObject().put("connect",
-				connectDownstreamChannelMessageContents);
+		connectDownstreamChannelMessageContents.put("usingProtocolVersion", protocolVersion);
+		return new JSONObject().put("connect", connectDownstreamChannelMessageContents);
 	}
 
 }

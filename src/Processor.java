@@ -16,9 +16,8 @@ public class Processor {
 	/**
 	 * @param args
 	 */
-	public Processor(int moveSpeed, int rotationSpeed, int turretRotationSpeed,
-			int fireInterval, int ballisticsTravelSpeed, int fieldOfView,
-			int turretFieldOfView, int hitPoints, int ballisticDamage,
+	public Processor(int moveSpeed, int rotationSpeed, int turretRotationSpeed, int fireInterval,
+			int ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints, int ballisticDamage,
 			int enemyHitScore, int enemyKillScore) {
 		this.moveSpeed = moveSpeed;
 		this.rotationSpeed = rotationSpeed;
@@ -52,8 +51,9 @@ public class Processor {
 
 		if (this.moveSpeed > -1)
 			return new Command("moveBackwardWithSpeed", "1.0");
-		else return new Command("rotateTank", "-90");
-		
+		else
+			return new Command("rotateTank", "-90");
+
 	}
 
 }

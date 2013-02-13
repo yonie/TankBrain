@@ -24,9 +24,8 @@ public class TankBrain {
 
 	public static void main(String[] args) {
 		System.out.println("DEBUG: Begin...");
-		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort,
-				upstreamPort, majorVersion, minorVersion, revisionVersion,
-				userName, tankColorRed, tankColorGreen, tankColorBlue);
+		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort, upstreamPort, majorVersion, minorVersion,
+				revisionVersion, userName, tankColorRed, tankColorGreen, tankColorBlue);
 		System.out.println("DEBUG: End.");
 	}
 }
