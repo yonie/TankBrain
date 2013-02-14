@@ -5,10 +5,12 @@ public class Processor extends Thread {
 	private boolean running;
 	private int[][] heatMap;
 	private Context latestContext;
-	int offsetX;
-	int offsetY;
-	int gridX;
-	int gridY;
+	private int gridOffsetX;
+	private int gridOffsetY;
+	private int gridSizeX;
+	private int gridSizeY;
+	private int heatMapSizeX;
+	private int heatMapSizeY;
 
 	/**
 	 * @param args
@@ -19,19 +21,23 @@ public class Processor extends Thread {
 		this.running = true;
 
 		// TODO: dynamic array dimensions
-		this.gridX = 20;
-		this.gridY = 20;
-		this.offsetX = 10;
-		this.offsetY = 10;
+		this.gridSizeX = 30;
+		this.gridSizeY = 30;
+		this.gridOffsetX = 15;
+		this.gridOffsetY = 15;
+		this.heatMapSizeX = 40;
+		this.heatMapSizeY = 40;
 
-		heatMap = new int[gridX + offsetX][gridY + offsetY];
+		heatMap = new int[heatMapSizeX][heatMapSizeY];
 	}
 
 	public void processContext(Context context) {
 		latestContext = context;
-		// TODO: determine proper offset & granularity
-		int x = (int) Math.round(context.getOwnTank().xpos) + offsetX;
-		int y = (int) Math.round(context.getOwnTank().ypos) + offsetY;
+
+		// save own coordinates in heatmap
+		int x = (int) Math.round(((context.getOwnTank().xpos + gridOffsetX) / gridSizeX) * heatMapSizeX);
+		int y = (int) Math.round(((context.getOwnTank().ypos + gridOffsetY) / gridSizeY) * heatMapSizeY);
+		System.out.println("DEBUG: Incrementing heatMap on [" + x + "][" + y + "]");
 		heatMap[x][y] += 1;
 	}
 
@@ -45,14 +51,17 @@ public class Processor extends Thread {
 				// TODO: insert fancy tank ops here
 
 				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
-				dispatcher.sendCommand(new Command("rotateTank", "125"));
-				Thread.sleep(1000);
-				
+				Thread.sleep(3000);
+				dispatcher.sendCommand(new Command("stop", "moving"));
+				dispatcher.sendCommand(new Command("rotateTank", "90"));
+				Thread.sleep(3000);
+
 				// dump the heatMap to system.out
-				for (int x = 0; x < gridX; x++) {
-					System.out.print("DEBUG: x=[" + x + "]\t");
-					for (int y = 0; y < gridY; y++) {
-						System.out.print("[" + (heatMap[x][y] != 0 ? heatMap[x][y] : " ") + "]");
+				for (int x = 0; x < heatMapSizeX; x++) {
+					System.out.print("DEBUG: x=" + x + "\t");
+					for (int y = 0; y < heatMapSizeY; y++) {
+						if (heatMap[x][y]==0) System.out.print("[  ]");
+						else System.out.print("["+(heatMap[x][y] < 10 ? " "+heatMap[x][y] : heatMap[x][y]) + "]");
 					}
 					System.out.println();
 				}
