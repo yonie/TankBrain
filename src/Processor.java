@@ -37,18 +37,22 @@ public class Processor extends Thread {
 
 	public void run() {
 
-		// TODO: insert fancy tank ops here
+		System.out.println("DEBUG: Running the thread...");
 
-		System.out.println("DEBUG: running the thread...");
 		while (running) {
 			try {
+
+				// TODO: insert fancy tank ops here
+
 				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
 				dispatcher.sendCommand(new Command("rotateTank", "125"));
 				Thread.sleep(1000);
+				
+				// dump the heatMap to system.out
 				for (int x = 0; x < gridX; x++) {
 					System.out.print("DEBUG: x=[" + x + "]\t");
 					for (int y = 0; y < gridY; y++) {
-						System.out.print("[" + (heatMap[x][y]!=0?heatMap[x][y]:" ") + "]");
+						System.out.print("[" + (heatMap[x][y] != 0 ? heatMap[x][y] : " ") + "]");
 					}
 					System.out.println();
 				}
