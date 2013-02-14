@@ -13,7 +13,9 @@ public class Processor extends Thread {
 	private int heatMapSizeY;
 
 	/**
-	 * @param args
+	 * 
+	 * @param dispatcher
+	 * @param rules
 	 */
 	public Processor(Dispatcher dispatcher, Rules rules) {
 		this.dispatcher = dispatcher;
@@ -25,22 +27,30 @@ public class Processor extends Thread {
 		this.gridSizeY = 30;
 		this.gridOffsetX = 15;
 		this.gridOffsetY = 15;
-		this.heatMapSizeX = 40;
-		this.heatMapSizeY = 40;
+		this.heatMapSizeX = 30;
+		this.heatMapSizeY = 30;
 
 		heatMap = new int[heatMapSizeX][heatMapSizeY];
 	}
 
+	/**
+	 * 
+	 * @param context
+	 */
 	public void processContext(Context context) {
 		latestContext = context;
 
 		// save own coordinates in heatmap
+		// FIXME: save other tanks' coordinates instead of my own
 		int x = (int) Math.round(((context.getOwnTank().xpos + gridOffsetX) / gridSizeX) * heatMapSizeX);
 		int y = (int) Math.round(((context.getOwnTank().ypos + gridOffsetY) / gridSizeY) * heatMapSizeY);
 		System.out.println("DEBUG: Incrementing heatMap on [" + x + "][" + y + "]");
 		heatMap[x][y] += 1;
 	}
 
+	/**
+	 * 
+	 */
 	public void run() {
 
 		System.out.println("DEBUG: Running the thread...");
@@ -54,7 +64,7 @@ public class Processor extends Thread {
 				Thread.sleep(3000);
 				dispatcher.sendCommand(new Command("stop", "moving"));
 				dispatcher.sendCommand(new Command("rotateTank", "90"));
-				Thread.sleep(3000);
+				Thread.sleep(2000);
 
 				// dump the heatMap to system.out
 				for (int x = 0; x < heatMapSizeX; x++) {
@@ -72,12 +82,20 @@ public class Processor extends Thread {
 		}
 	}
 
+	/**
+	 * 
+	 * @param error
+	 */
 	public void processError(CommandExecutionError error) {
 
 		// TODO: do some fancy error handling here
 
 	}
 
+	/**
+	 * 
+	 * @param running
+	 */
 	public void setRunning(Boolean running) {
 		this.running = running;
 	}
