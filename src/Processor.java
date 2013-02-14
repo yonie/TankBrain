@@ -5,7 +5,10 @@ public class Processor extends Thread {
 	private boolean running;
 	private int[][] heatMap;
 	private Context latestContext;
-	int offset;
+	int offsetX;
+	int offsetY;
+	int gridX;
+	int gridY;
 
 	/**
 	 * @param args
@@ -16,15 +19,19 @@ public class Processor extends Thread {
 		this.running = true;
 
 		// TODO: dynamic array dimensions
-		this.offset = 1000;
-		heatMap = new int[500 + offset][500 + offset];
+		this.gridX = 20;
+		this.gridY = 20;
+		this.offsetX = 10;
+		this.offsetY = 10;
+
+		heatMap = new int[gridX + offsetX][gridY + offsetY];
 	}
 
 	public void processContext(Context context) {
 		latestContext = context;
 		// TODO: determine proper offset & granularity
-		int x = (int) Math.round(context.getOwnTank().xpos) + offset;
-		int y = (int) Math.round(context.getOwnTank().ypos) + offset;
+		int x = (int) Math.round(context.getOwnTank().xpos) + offsetX;
+		int y = (int) Math.round(context.getOwnTank().ypos) + offsetY;
 		heatMap[x][y] += 1;
 	}
 
@@ -37,13 +44,15 @@ public class Processor extends Thread {
 			try {
 				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
 				dispatcher.sendCommand(new Command("rotateTank", "125"));
-				for (int x = 0; x < 500 + offset; x++) {
-					for (int y = 0; y < 500 + offset; y++) {
-						if (heatMap[x][y] > 0)
-							System.out.println("DEBUG: heatMap on [" + x + "][" + y + "] is " + heatMap[x][y]);
-					}
-				}
 				Thread.sleep(1000);
+				for (int x = 0; x < gridX; x++) {
+					System.out.print("x=[" + x + "]\t");
+					for (int y = 0; y < gridY; y++) {
+						System.out.print("[" + heatMap[x][y] + "]");
+					}
+					System.out.println();
+				}
+
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
