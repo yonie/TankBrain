@@ -31,6 +31,7 @@ public class Context {
 			// false);
 
 			// TODO: objectsInFieldOfView
+			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}

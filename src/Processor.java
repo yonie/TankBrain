@@ -1,49 +1,33 @@
 public class Processor extends Thread {
 
 	private Dispatcher dispatcher;
+	private Rules rules;
 	private boolean running;
-	private int moveSpeed;
-	private int rotationSpeed;
-	private int turretRotationSpeed;
-	private int fireInterval;
-	private int ballisticsTravelSpeed;
-	private int fieldOfView;
-	private int turretFieldOfView;
-	private int hitPoints;
-	private int ballisticDamage;
-	private int enemyHitScore;
-	private int enemyKillScore;
-	private int[] heatMap;
+	private int[][] heatMap;
+	private Context latestContext;
+	int offset;
 
 	/**
 	 * @param args
 	 */
-	public Processor(Dispatcher dispatcher, int moveSpeed, int rotationSpeed, int turretRotationSpeed,
-			int fireInterval, int ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints,
-			int ballisticDamage, int enemyHitScore, int enemyKillScore) {
+	public Processor(Dispatcher dispatcher, Rules rules) {
 		this.dispatcher = dispatcher;
-		this.moveSpeed = moveSpeed;
-		this.rotationSpeed = rotationSpeed;
-		this.turretRotationSpeed = turretRotationSpeed;
-		this.fireInterval = fireInterval;
-		this.ballisticsTravelSpeed = ballisticsTravelSpeed;
-		this.fieldOfView = fieldOfView;
-		this.turretFieldOfView = turretFieldOfView;
-		this.hitPoints = hitPoints;
-		this.ballisticDamage = ballisticDamage;
-		this.enemyHitScore = enemyHitScore;
-		this.enemyKillScore = enemyKillScore;
+		this.rules = rules;
 		this.running = true;
+
+		// TODO: dynamic array dimensions
+		this.offset = 1000;
+		heatMap = new int[500 + offset][500 + offset];
 	}
 
 	public void processContext(Context context) {
-
-		// TODO: update private stats based on context
-
-		// TODO: update heatmap
-
+		latestContext = context;
+		// TODO: determine proper offset & granularity
+		int x = (int) Math.round(context.getOwnTank().xpos) + offset;
+		int y = (int) Math.round(context.getOwnTank().ypos) + offset;
+		heatMap[x][y] += 1;
 	}
-	
+
 	public void run() {
 
 		// TODO: insert fancy tank ops here
@@ -53,6 +37,12 @@ public class Processor extends Thread {
 			try {
 				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
 				dispatcher.sendCommand(new Command("rotateTank", "125"));
+				for (int x = 0; x < 500 + offset; x++) {
+					for (int y = 0; y < 500 + offset; y++) {
+						if (heatMap[x][y] > 0)
+							System.out.println("DEBUG: heatMap on [" + x + "][" + y + "] is " + heatMap[x][y]);
+					}
+				}
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();

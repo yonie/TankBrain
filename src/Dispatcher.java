@@ -133,18 +133,19 @@ public class Dispatcher {
 			System.out.println("DEBUG: Welcome to game: " + initialGameState.toString());
 
 			// fetch rules object from initial game state
-			JSONObject rules = initialGameState.getJSONObject("rules");
-			assert (rules != null);
+			JSONObject jsonRules = initialGameState.getJSONObject("rules");
+			assert (jsonRules != null);
 
 			// set up processor using initial game state rules
-			processor = new Processor(this, rules.getInt("moveSpeed"), rules.getInt("rotationSpeed"),
-					rules.getInt("turretRotationSpeed"), rules.getInt("fireInterval"),
-					rules.getInt("ballisticsTravelSpeed"), rules.getInt("fieldOfView"),
-					rules.getInt("turretFieldOfView"), rules.getInt("hp"), rules.getInt("ballisticDamage"),
-					rules.getInt("enemyHitScore"), rules.getInt("enemyKillScore"));
+			Rules gameRules = new Rules(jsonRules.getInt("moveSpeed"), jsonRules.getInt("rotationSpeed"),
+					jsonRules.getInt("turretRotationSpeed"), jsonRules.getInt("fireInterval"),
+					jsonRules.getInt("ballisticsTravelSpeed"), jsonRules.getInt("fieldOfView"),
+					jsonRules.getInt("turretFieldOfView"), jsonRules.getInt("hp"), jsonRules.getInt("ballisticDamage"),
+					jsonRules.getInt("enemyHitScore"), jsonRules.getInt("enemyKillScore"));
+			processor = new Processor(this, gameRules);
 
 			processor.start();
-			
+
 			while (true) {
 
 				// listen for input (blocking)
@@ -166,7 +167,7 @@ public class Dispatcher {
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 		}
-		
+
 		// make sure the threaded processor will stop
 		processor.setRunning(false);
 	}
