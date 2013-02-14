@@ -46,9 +46,9 @@ public class Processor extends Thread {
 				dispatcher.sendCommand(new Command("rotateTank", "125"));
 				Thread.sleep(1000);
 				for (int x = 0; x < gridX; x++) {
-					System.out.print("x=[" + x + "]\t");
+					System.out.print("DEBUG: x=[" + x + "]\t");
 					for (int y = 0; y < gridY; y++) {
-						System.out.print("[" + heatMap[x][y] + "]");
+						System.out.print("[" + (heatMap[x][y]!=0?heatMap[x][y]:" ") + "]");
 					}
 					System.out.println();
 				}
