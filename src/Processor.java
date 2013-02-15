@@ -64,9 +64,8 @@ public class Processor extends Thread {
 				HeatMapCoordinate quietPlace = findQuietPlace();
 				HeatMapCoordinate randomPlace = findRandomPlace();
 
-				int angle = (int) Math.round(calculateAngleTo(randomPlace));
 				dispatcher.sendCommand(new Command("stop", "moving"));
-				dispatcher.sendCommand(new Command("rotateTank", "" + angle));
+				dispatcher.sendCommand(new Command("rotateTank", "" + angleTo(randomPlace)));
 				Thread.sleep(3000);
 				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
 
@@ -76,16 +75,6 @@ public class Processor extends Thread {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/*
-	 * Finds a random place on the heatMap
-	 */
-	private HeatMapCoordinate findRandomPlace() {
-		int x = (int) (Math.random() * heatMapSize);
-		int y = (int) (Math.random() * heatMapSize);
-		System.out.println("DEBUG: Found random place at " + x + "," + y);
-		return new HeatMapCoordinate(x, y);
 	}
 
 	/**
@@ -114,7 +103,7 @@ public class Processor extends Thread {
 	/*
 	 * This method calculates the angle to get to a specific place
 	 */
-	private double calculateAngleTo(HeatMapCoordinate quietPlace) {
+	private int angleTo(HeatMapCoordinate quietPlace) {
 		double currentAngle = latestContext.getOwnTank().tankAngle;
 		System.out.println("DEBUG: Current angle: " + currentAngle);
 		HeatMapCoordinate currentPos = new HeatMapCoordinate(latestContext.getOwnTank().xpos,
@@ -123,7 +112,7 @@ public class Processor extends Thread {
 		int distanceY = quietPlace.getY() - currentPos.getY();
 		double newAngle = Math.toDegrees(Math.atan2(distanceX, distanceY));
 		System.out.println("DEBUG: New angle: " + currentAngle);
-		return newAngle - currentAngle;
+		return (int) Math.round(newAngle - currentAngle);
 	}
 
 	/*
@@ -142,7 +131,7 @@ public class Processor extends Thread {
 	}
 
 	/*
-	 * This method returns the most crowded place (with most hits) in the
+	 * Finds the most crowded place (with most hits) in the
 	 * heatMap. If more than one place has the same amount of hits, the first
 	 * found place will be returned.
 	 */
@@ -163,8 +152,8 @@ public class Processor extends Thread {
 	}
 
 	/*
-	 * This method returns a quiet place (with least hits) in the heatMap. If
-	 * more than one place has the same amount of hits, the last found place
+	 * Finds a quiet place (with least hits) in the heatMap. If
+	 * more than one place has the same amount of hits, the first found place
 	 * will be returned.
 	 */
 	private HeatMapCoordinate findQuietPlace() {
@@ -173,7 +162,7 @@ public class Processor extends Thread {
 
 		for (int x = 0; x < heatMapSize; x++) {
 			for (int y = 0; y < heatMapSize; y++) {
-				if (heatMap[x][y] <= heatMap[quietPlaceX][quietPlaceY]) {
+				if (heatMap[x][y] < heatMap[quietPlaceX][quietPlaceY]) {
 					quietPlaceX = x;
 					quietPlaceY = y;
 				}
@@ -181,6 +170,16 @@ public class Processor extends Thread {
 		}
 		System.out.println("DEBUG: Found quiet place at " + quietPlaceX + "," + quietPlaceY);
 		return new HeatMapCoordinate(quietPlaceX, quietPlaceY);
+	}
+
+	/*
+	 * Finds a random place on the heatMap
+	 */
+	private HeatMapCoordinate findRandomPlace() {
+		int x = (int) (Math.random() * heatMapSize);
+		int y = (int) (Math.random() * heatMapSize);
+		System.out.println("DEBUG: Found random place at " + x + "," + y);
+		return new HeatMapCoordinate(x, y);
 	}
 
 	/*
