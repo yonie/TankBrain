@@ -31,24 +31,40 @@ public class Context {
 			// false);
 
 			// TODO: objectsInFieldOfView
-			
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public Tank getOwnTank() {
 		return ownTank;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isMoving() {
 		return isMoving;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isPerformingScan() {
 		return isPerformingScan;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isRotating() {
 		return isRotating;
 	}

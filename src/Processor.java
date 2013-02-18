@@ -3,11 +3,10 @@ public class Processor extends Thread {
 	private Dispatcher dispatcher;
 	private Rules rules;
 	private boolean running;
-	private int[][] heatMap;
-	private Context latestContext;
-	private int gridOffset;
-	private int gridSize;
+	private HeatMap heatMap;
+	private Context lastRecievedContext;
 	private int heatMapSize;
+	private double ownTankSpeed = 0.1;
 
 	/**
 	 * The Processor is the brains of the tank. It determines where to move,
@@ -24,56 +23,71 @@ public class Processor extends Thread {
 		this.rules = rules;
 		this.running = true;
 
-		// TODO: dynamic array dimensions
-		this.gridSize = 30;
-		this.gridOffset = 15;
+		// TODO: dynamic array dimensions based on server input
 		this.heatMapSize = 30;
 
-		heatMap = new int[heatMapSize][heatMapSize];
+		heatMap = new HeatMap(heatMapSize);
 	}
 
 	/**
-	 * Updates the processor with the latest context.
+	 * Updates the processor with the latest game Context.
 	 * 
 	 * @param context
-	 *            the latest context.
+	 *            the latest Context.
 	 */
 	public void processContext(Context context) {
 
-		latestContext = context;
+		lastRecievedContext = context;
 
-		updateHeatMap();
+		// TODO: save other tanks' coordinates instead of my own
+
+		// save coordinates in heatMap
+		heatMap.increment(lastRecievedContext.getOwnTank().getPlace());
 	}
 
 	/**
-	 * Starts the main processor thread. This thread is responsible for doing
-	 * all ongoing calculations, path finding and determining steps to take.
+	 * Starts the main Processor thread. This thread is responsible for doing
+	 * all ongoing calculations, Path finding and determining steps to take.
 	 */
 	public void run() {
 
 		System.out.println("DEBUG: Running the thread...");
 
 		while (running) {
-			try {
+			if (lastRecievedContext != null) {
 
-				Thread.sleep(1000);
+				try {
 
-				// TODO: insert fancy tank ops here
+					// TODO: insert fancy tank ops here
 
-				HeatMapCoordinate mostCrowdedPlace = findMostCrowdedPlace();
-				HeatMapCoordinate quietPlace = findQuietPlace();
-				HeatMapCoordinate randomPlace = findRandomPlace();
+					Place mostCrowdedPlace = heatMap.findMostCrowdedPlace();
+					Place quietPlace = heatMap.findQuietPlace();
+					Place randomPlace = heatMap.findRandomPlace();
 
-				dispatcher.sendCommand(new Command("stop", "moving"));
-				dispatcher.sendCommand(new Command("rotateTank", "" + angleTo(randomPlace)));
-				Thread.sleep(3000);
-				dispatcher.sendCommand(new Command("moveForwardWithSpeed", "0.1"));
+					Path pathToTraverse = new Path(lastRecievedContext.getOwnTank().getPlace(), randomPlace,
+							lastRecievedContext.getOwnTank().getAngle(), rules.getMovementSpeed(),
+							rules.getRotationSpeed());
 
-				dumpHeatMap();
+					dispatcher.sendCommand(new Command("stop", "moving"));
+					dispatcher.sendCommand(new Command("rotateTank", pathToTraverse.getRotationAngle()));
+					System.out.println("DEBUG: Path stats: From/to is " + pathToTraverse.getStartingPlace() + ", "
+							+ pathToTraverse.getDestinationPlace());
+					System.out.println("DEBUG: Path stats: Rotation angle " + pathToTraverse.getRotationAngle()
+							+ ", rotation duration " + pathToTraverse.getRotationDuration());
 
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+					Thread.sleep((long) Math.ceil(pathToTraverse.getRotationDuration() * 1000));
+
+					dispatcher.sendCommand(new Command("moveForwardWithSpeed", pathToTraverse.getMovementSpeed()));
+					System.out.println("DEBUG: Path stats: Movement speed " + pathToTraverse.getMovementSpeed()
+							+ ", movement duration " + pathToTraverse.getMovementDuration());
+					Thread.sleep((long) Math.ceil(pathToTraverse.getMovementDuration() * 1000));
+
+					// heatMap.dumpHeatMapToSysOut();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else
+				System.out.println("DEBUG: Threads not yet in sync.");
 		}
 	}
 
@@ -86,117 +100,21 @@ public class Processor extends Thread {
 	 */
 	public void processError(CommandExecutionError error) {
 
+		System.out.println("DEBUG: Processing error with reason: " + error.getReason());
+
 		// TODO: do some fancy error handling here
+		dispatcher.sendCommand(new Command("moveBackwardWithSpeed", ownTankSpeed));
 
 	}
 
 	/**
-	 * Sets whether the processor thread should be running.
+	 * Sets whether the Processor thread should be running.
 	 * 
 	 * @param running
 	 *            true if the processor thread should be running.
 	 */
 	public void setRunning(Boolean running) {
 		this.running = running;
-	}
-
-	/*
-	 * This method calculates the angle to get to a specific place
-	 */
-	private int angleTo(HeatMapCoordinate quietPlace) {
-		double currentAngle = latestContext.getOwnTank().tankAngle;
-		System.out.println("DEBUG: Current angle: " + currentAngle);
-		HeatMapCoordinate currentPos = new HeatMapCoordinate(latestContext.getOwnTank().xpos,
-				latestContext.getOwnTank().ypos, gridOffset, gridSize, heatMapSize);
-		int distanceX = quietPlace.getX() - currentPos.getX();
-		int distanceY = quietPlace.getY() - currentPos.getY();
-		double newAngle = Math.toDegrees(Math.atan2(distanceX, distanceY));
-		System.out.println("DEBUG: New angle: " + currentAngle);
-		return (int) Math.round(newAngle - currentAngle);
-	}
-
-	/*
-	 * This method updates the heatMap based on the latest available Context.
-	 */
-	private void updateHeatMap() {
-
-		// save own coordinates in heatMap
-		// FIXME: save other tanks' coordinates instead of my own
-
-		HeatMapCoordinate myPos = new HeatMapCoordinate(latestContext.getOwnTank().xpos,
-				latestContext.getOwnTank().ypos, gridOffset, gridSize, heatMapSize);
-
-		System.out.println("DEBUG: Incrementing heatMap on [" + myPos.getX() + "][" + myPos.getY() + "]");
-		heatMap[myPos.getX()][myPos.getY()] += 1;
-	}
-
-	/*
-	 * Finds the most crowded place (with most hits) in the
-	 * heatMap. If more than one place has the same amount of hits, the first
-	 * found place will be returned.
-	 */
-	private HeatMapCoordinate findMostCrowdedPlace() {
-		int mostCrowdedPlaceX = 0;
-		int mostCrowdedPlaceY = 0;
-
-		for (int x = 0; x < heatMapSize; x++) {
-			for (int y = 0; y < heatMapSize; y++) {
-				if (heatMap[x][y] > heatMap[mostCrowdedPlaceX][mostCrowdedPlaceY]) {
-					mostCrowdedPlaceX = x;
-					mostCrowdedPlaceY = y;
-				}
-			}
-		}
-		System.out.println("DEBUG: Found most crowded place at " + mostCrowdedPlaceX + "," + mostCrowdedPlaceY);
-		return new HeatMapCoordinate(mostCrowdedPlaceX, mostCrowdedPlaceY);
-	}
-
-	/*
-	 * Finds a quiet place (with least hits) in the heatMap. If
-	 * more than one place has the same amount of hits, the first found place
-	 * will be returned.
-	 */
-	private HeatMapCoordinate findQuietPlace() {
-		int quietPlaceX = 0;
-		int quietPlaceY = 0;
-
-		for (int x = 0; x < heatMapSize; x++) {
-			for (int y = 0; y < heatMapSize; y++) {
-				if (heatMap[x][y] < heatMap[quietPlaceX][quietPlaceY]) {
-					quietPlaceX = x;
-					quietPlaceY = y;
-				}
-			}
-		}
-		System.out.println("DEBUG: Found quiet place at " + quietPlaceX + "," + quietPlaceY);
-		return new HeatMapCoordinate(quietPlaceX, quietPlaceY);
-	}
-
-	/*
-	 * Finds a random place on the heatMap
-	 */
-	private HeatMapCoordinate findRandomPlace() {
-		int x = (int) (Math.random() * heatMapSize);
-		int y = (int) (Math.random() * heatMapSize);
-		System.out.println("DEBUG: Found random place at " + x + "," + y);
-		return new HeatMapCoordinate(x, y);
-	}
-
-	/*
-	 * This method dumps the current heatMap to System.out for debug purposes.
-	 */
-	private void dumpHeatMap() {
-		// dump the heatMap to system.out
-		for (int x = 0; x < heatMapSize; x++) {
-			System.out.print("DEBUG: x=" + x + "\t");
-			for (int y = 0; y < heatMapSize; y++) {
-				if (heatMap[x][y] == 0)
-					System.out.print("[  ]");
-				else
-					System.out.print("[" + (heatMap[x][y] < 10 ? " " + heatMap[x][y] : heatMap[x][y]) + "]");
-			}
-			System.out.println();
-		}
 	}
 
 }

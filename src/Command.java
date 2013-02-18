@@ -14,6 +14,26 @@ public class Command {
 		this.command = command;
 		this.param = param;
 	}
+	
+	/**
+	 * 
+	 * @param command
+	 * @param param
+	 */
+	public Command(String command, Double param) {
+		this.command = command;
+		this.param = "" + param;
+	}
+
+	/**
+	 * 
+	 * @param command
+	 * @param param
+	 */
+	public Command(String command, int param) {
+		this.command = command;
+		this.param = "" + param;
+	}
 
 	/**
 	 * Returns the first hand of the command.

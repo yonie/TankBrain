@@ -137,9 +137,9 @@ public class Dispatcher {
 			assert (jsonRules != null);
 
 			// set up processor using initial game state rules
-			Rules gameRules = new Rules(jsonRules.getInt("moveSpeed"), jsonRules.getInt("rotationSpeed"),
-					jsonRules.getInt("turretRotationSpeed"), jsonRules.getInt("fireInterval"),
-					jsonRules.getInt("ballisticsTravelSpeed"), jsonRules.getInt("fieldOfView"),
+			Rules gameRules = new Rules(jsonRules.getDouble("moveSpeed"), jsonRules.getDouble("rotationSpeed"),
+					jsonRules.getDouble("turretRotationSpeed"), jsonRules.getDouble("fireInterval"),
+					jsonRules.getDouble("ballisticsTravelSpeed"), jsonRules.getInt("fieldOfView"),
 					jsonRules.getInt("turretFieldOfView"), jsonRules.getInt("hp"), jsonRules.getInt("ballisticDamage"),
 					jsonRules.getInt("enemyHitScore"), jsonRules.getInt("enemyKillScore"));
 			processor = new Processor(this, gameRules);
@@ -150,7 +150,6 @@ public class Dispatcher {
 
 				// listen for input (blocking)
 				String rawContext = downstreamInput.readLine();
-				System.out.println("DEBUG: Recieved context: " + rawContext);
 
 				// parse context object out of raw JSON context
 				Context context = new Context(new JSONObject(rawContext).getJSONObject("tankStatusUpdate"));
@@ -166,12 +165,22 @@ public class Dispatcher {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
 			e.printStackTrace();
+		} catch (ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace();
 		}
 
 		// make sure the threaded processor will stop
 		processor.setRunning(false);
 	}
 
+	/**
+	 * Sends a Command to the server. If a CommandExecutionError occurs, the
+	 * processor will be asked to process the error which might trigger sending
+	 * a new Command.
+	 * 
+	 * @param command
+	 *            Command to send.
+	 */
 	public void sendCommand(Command command) {
 
 		try {

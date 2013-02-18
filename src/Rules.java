@@ -1,10 +1,10 @@
 public class Rules {
 
-	private int moveSpeed;
-	private int rotationSpeed;
-	private int turretRotationSpeed;
-	private int fireInterval;
-	private int ballisticsTravelSpeed;
+	private double movementSpeed;
+	private double rotationSpeed;
+	private double turretRotationSpeed;
+	private double fireInterval;
+	private double ballisticsTravelSpeed;
 	private int fieldOfView;
 	private int turretFieldOfView;
 	private int hitPoints;
@@ -12,11 +12,25 @@ public class Rules {
 	private int enemyHitScore;
 	private int enemyKillScore;
 	
-	public Rules(int moveSpeed, int rotationSpeed, int turretRotationSpeed,
-			int fireInterval, int ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints,
+	/**
+	 * 
+	 * @param movementSpeed
+	 * @param rotationSpeed
+	 * @param turretRotationSpeed
+	 * @param fireInterval
+	 * @param ballisticsTravelSpeed
+	 * @param fieldOfView
+	 * @param turretFieldOfView
+	 * @param hitPoints
+	 * @param ballisticDamage
+	 * @param enemyHitScore
+	 * @param enemyKillScore
+	 */
+	public Rules(double movementSpeed, double rotationSpeed, double turretRotationSpeed,
+			double fireInterval, double ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints,
 			int ballisticDamage, int enemyHitScore, int enemyKillScore) {
 	
-		this.moveSpeed = moveSpeed;
+		this.movementSpeed = movementSpeed;
 		this.rotationSpeed = rotationSpeed;
 		this.turretRotationSpeed = turretRotationSpeed;
 		this.fireInterval = fireInterval;
@@ -28,5 +42,21 @@ public class Rules {
 		this.enemyHitScore = enemyHitScore;
 		this.enemyKillScore = enemyKillScore;
 
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public double getRotationSpeed() {
+		return rotationSpeed;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public double getMovementSpeed() {
+		return movementSpeed;
 	}
 }
