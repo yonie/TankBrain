@@ -40,6 +40,7 @@ public class Place {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "Place, x=" + x + ", y=" + y;
+		return "x=" + x + ", y=" + y;
 	}
+
 }

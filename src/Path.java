@@ -35,25 +35,19 @@ public class Path {
 	 * Gets the movement duration based on the distance to travel and movement
 	 * speed.
 	 * 
-	 * @return movement duration for this Path.
+	 * @return movement duration for this Path in milliseconds.
 	 */
 	public double getMovementDuration() {
-
-		// determine distance to travel
-		double distanceX = startingPlace.getX() - destinationPlace.getX();
-		double distanceY = startingPlace.getY() - destinationPlace.getY();
-		double distanceToTravel = (int) Math.round(Math.sqrt((distanceX * distanceX) + (distanceY * distanceY)));
-
-		return (distanceToTravel / movementSpeed);
+		return (getDistance() / movementSpeed) * 1000;
 	}
 
 	/**
 	 * Gets the rotation duration based on the current and required angle.
 	 * 
-	 * @return the rotation duration for this Path.
+	 * @return the rotation duration for this Path in milliseconds.
 	 */
 	public double getRotationDuration() {
-		return Math.abs(getRotationAngle() / rotationSpeed);
+		return Math.abs(getRotationAngle() / rotationSpeed) * 1000;
 	}
 
 	/**
@@ -64,18 +58,20 @@ public class Path {
 	 */
 	public double getRotationAngle() {
 
-		// first we need to get our current angle
-		double distanceX = startingPlace.getX() - destinationPlace.getX();
-		double distanceY = startingPlace.getY() - destinationPlace.getY();
+		double distanceX = destinationPlace.getX() - startingPlace.getX();
+		double distanceY = destinationPlace.getY() - startingPlace.getY();
 
-		// do magic to get new angle
-		double newAngle = Math.toDegrees(Math.atan2(distanceX, distanceY));
+		// do math magic to get new angle
+		double newAngle = Math.toDegrees(Math.atan2(distanceY, distanceX));
 
+		// make sure to take the starting angle into account
 		double rotationAngle = newAngle - startingAngle;
 
-		// fix angles lower than -180 degrees
+		// fix angles that end up lower than -180 degrees
 		if (rotationAngle < -180)
 			rotationAngle += 360;
+		if (rotationAngle > 180)
+			rotationAngle -= 360;
 
 		assert (rotationAngle <= 180 && rotationAngle >= -180);
 
@@ -103,10 +99,35 @@ public class Path {
 	/**
 	 * Gets the destination Place for this Path.
 	 * 
-	 * @return the destination Place. 
+	 * @return the destination Place.
 	 */
 	public Place getDestinationPlace() {
 		return destinationPlace;
 	}
 
+	/**
+	 * Gets the distance between the starting Place and destination Place of
+	 * this Path. Note that the actual distance might vary based on the route
+	 * the tank will choose to take.
+	 * 
+	 * @return the distance between the starting Place and destination Place of
+	 *         this Path.
+	 */
+	public double getDistance() {
+		double xDistance = Math.abs(destinationPlace.getX() - startingPlace.getX());
+		double yDistance = Math.abs(destinationPlace.getY() - startingPlace.getY());
+		return (Math.sqrt((xDistance * xDistance) + (yDistance * yDistance)));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "From: (" + startingPlace + "), to: (" + destinationPlace + "), distance: " + getDistance()
+				+ ", starting angle: " + startingAngle + ", rotation angle: " + getRotationAngle()
+				+ ", movement speed: " + movementSpeed + ", rotation speed: " + rotationSpeed + ", movement duration: "
+				+ this.getMovementDuration();
+	}
 }

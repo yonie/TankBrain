@@ -6,7 +6,13 @@ public class Processor extends Thread {
 	private HeatMap heatMap;
 	private Context lastRecievedContext;
 	private int heatMapSize;
-	private double ownTankSpeed = 0.1;
+	private int mode;
+	private Place targetPlace;
+
+	final int TEST = 0;
+	final int RANDOM = 1;
+	final int QUIET = 2;
+	final int BUSY = 3;
 
 	/**
 	 * The Processor is the brains of the tank. It determines where to move,
@@ -22,9 +28,10 @@ public class Processor extends Thread {
 		this.dispatcher = dispatcher;
 		this.rules = rules;
 		this.running = true;
+		this.mode = TEST;
 
 		// TODO: dynamic array dimensions based on server input
-		this.heatMapSize = 30;
+		this.heatMapSize = 50;
 
 		heatMap = new HeatMap(heatMapSize);
 	}
@@ -54,41 +61,65 @@ public class Processor extends Thread {
 		System.out.println("DEBUG: Running the thread...");
 
 		while (running) {
-			if (lastRecievedContext != null) {
 
-				try {
+			try {
+				if (lastRecievedContext != null) {
 
-					// TODO: insert fancy tank ops here
+					Place currentPlace = lastRecievedContext.getOwnTank().getPlace();
+					double currentAngle = lastRecievedContext.getOwnTank().getAngle();
 
-					Place mostCrowdedPlace = heatMap.findMostCrowdedPlace();
-					Place quietPlace = heatMap.findQuietPlace();
-					Place randomPlace = heatMap.findRandomPlace();
+					if (targetPlace == null) {
+						System.out.println("DEBUG: Setting new target!");
+						setNewTarget();
+					}
 
-					Path pathToTraverse = new Path(lastRecievedContext.getOwnTank().getPlace(), randomPlace,
-							lastRecievedContext.getOwnTank().getAngle(), rules.getMovementSpeed(),
+					Path pathToTraverse = new Path(currentPlace, targetPlace, currentAngle, rules.getMovementSpeed(),
 							rules.getRotationSpeed());
 
-					dispatcher.sendCommand(new Command("stop", "moving"));
+					System.out.println("DEBUG: Path to traverse: " + pathToTraverse);
+
 					dispatcher.sendCommand(new Command("rotateTank", pathToTraverse.getRotationAngle()));
-					System.out.println("DEBUG: Path stats: From/to is " + pathToTraverse.getStartingPlace() + ", "
-							+ pathToTraverse.getDestinationPlace());
-					System.out.println("DEBUG: Path stats: Rotation angle " + pathToTraverse.getRotationAngle()
-							+ ", rotation duration " + pathToTraverse.getRotationDuration());
+					Thread.sleep(Math.round(pathToTraverse.getRotationDuration()));
 
-					Thread.sleep((long) Math.ceil(pathToTraverse.getRotationDuration() * 1000));
+					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 0.33));
+					Thread.sleep(Math.round(pathToTraverse.getMovementDuration()));
 
-					dispatcher.sendCommand(new Command("moveForwardWithSpeed", pathToTraverse.getMovementSpeed()));
-					System.out.println("DEBUG: Path stats: Movement speed " + pathToTraverse.getMovementSpeed()
-							+ ", movement duration " + pathToTraverse.getMovementDuration());
-					Thread.sleep((long) Math.ceil(pathToTraverse.getMovementDuration() * 1000));
+					dispatcher.sendCommand(new Command("stop", "moving"));
 
-					// heatMap.dumpHeatMapToSysOut();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+					Thread.sleep(2000);
+
+				} else {
+					System.out.println("DEBUG: Threads not yet in sync. Waiting 1 second...");
+					Thread.sleep(1000);
 				}
-			} else
-				System.out.println("DEBUG: Threads not yet in sync.");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+
+			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param mode
+	 */
+	public void setMode(int mode) {
+		this.mode = mode;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	private void setNewTarget() {
+		if (mode == TEST)
+			targetPlace = new Place(10, 0);
+		else if (mode == RANDOM)
+			targetPlace = heatMap.findRandomPlace();
+		else if (mode == QUIET)
+			targetPlace = heatMap.findQuietPlace();
+		else
+			targetPlace = heatMap.findMostCrowdedPlace();
 	}
 
 	/**
@@ -103,7 +134,6 @@ public class Processor extends Thread {
 		System.out.println("DEBUG: Processing error with reason: " + error.getReason());
 
 		// TODO: do some fancy error handling here
-		dispatcher.sendCommand(new Command("moveBackwardWithSpeed", ownTankSpeed));
 
 	}
 

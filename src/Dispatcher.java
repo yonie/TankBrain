@@ -145,11 +145,11 @@ public class Dispatcher {
 			processor = new Processor(this, gameRules);
 
 			processor.start();
+			
+			String rawContext;
 
-			while (true) {
-
-				// listen for input (blocking)
-				String rawContext = downstreamInput.readLine();
+			// listen for input (blocking)
+			while ((rawContext = downstreamInput.readLine()) != null) {
 
 				// parse context object out of raw JSON context
 				Context context = new Context(new JSONObject(rawContext).getJSONObject("tankStatusUpdate"));
@@ -192,7 +192,6 @@ public class Dispatcher {
 			upstreamOutput.write(jsonCommand.toString());
 			upstreamOutput.newLine();
 			upstreamOutput.flush();
-			System.out.println("DEBUG: Sent command: " + jsonCommand.toString());
 
 			// get command ack
 			JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
