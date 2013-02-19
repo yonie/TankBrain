@@ -18,29 +18,30 @@ public class PathTest {
 	@Test
 	public void testAngles() {
 
-		p = new Path(new Place(0, 0), new Place(10, 10), 0, movementSpeed, rotationSpeed);
+		p = new Path(new Place(0, 0), new Place(0, 1), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", 0, p.getRotationAngle(),0);
+
+		p = new Path(new Place(0, 0), new Place(1, 1), 0, movementSpeed, rotationSpeed);
 		assertEquals("Angle not correct:", 45, p.getRotationAngle(),0);
 
-		p = new Path(new Place(10, 10), new Place(0, 0), 0, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", 45-180, p.getRotationAngle(),0);
+		p = new Path(new Place(0, 0), new Place(1, 0), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", 90, p.getRotationAngle(),0);
 
-		p = new Path(new Place(10, 10), new Place(5, 5), 0, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", 45-180, p.getRotationAngle(),0);
+		p = new Path(new Place(0, 0), new Place(1, -1), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", 135, p.getRotationAngle(),0);
 
-		p = new Path(new Place(5, 5), new Place(-5, -5), 0, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", 45-180, p.getRotationAngle(),0);
+		p = new Path(new Place(0, 0), new Place(0, -1), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", 180, p.getRotationAngle(),0);
 
-		p = new Path(new Place(-5, 5), new Place(5, -5), 0, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", -45, p.getRotationAngle(),0);
+		p = new Path(new Place(0, 0), new Place(-1, -1), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", -135, p.getRotationAngle(),0);
 
-		p = new Path(new Place(0, 10), new Place(10, 0), 0, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", -45, p.getRotationAngle(),0);
-
-		p = new Path(new Place(0, 10), new Place(10, 0), 45, movementSpeed, rotationSpeed);
+		p = new Path(new Place(0, 0), new Place(-1, 0), 0, movementSpeed, rotationSpeed);
 		assertEquals("Angle not correct:", -90, p.getRotationAngle(),0);
 
-		p = new Path(new Place(0, 10), new Place(10, 0), 245, movementSpeed, rotationSpeed);
-		assertEquals("Angle not correct:", 70, p.getRotationAngle(),0);
+		p = new Path(new Place(0, 0), new Place(-1, 1), 0, movementSpeed, rotationSpeed);
+		assertEquals("Angle not correct:", -45, p.getRotationAngle(),0);
+
 
 	}
 

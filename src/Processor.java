@@ -28,9 +28,9 @@ public class Processor extends Thread {
 		this.dispatcher = dispatcher;
 		this.rules = rules;
 		this.running = true;
-		this.mode = TEST;
+		this.mode = RANDOM;
 
-		// TODO: dynamic array dimensions based on server input
+		// TODO: dynamic array dimensions based on server grid
 		this.heatMapSize = 50;
 
 		heatMap = new HeatMap(heatMapSize);
@@ -68,7 +68,7 @@ public class Processor extends Thread {
 					Place currentPlace = lastRecievedContext.getOwnTank().getPlace();
 					double currentAngle = lastRecievedContext.getOwnTank().getAngle();
 
-					if (targetPlace == null) {
+					if (targetPlace == null || targetPlace.isNearby(currentPlace)) {
 						System.out.println("DEBUG: Setting new target!");
 						setNewTarget();
 					}
@@ -79,14 +79,12 @@ public class Processor extends Thread {
 					System.out.println("DEBUG: Path to traverse: " + pathToTraverse);
 
 					dispatcher.sendCommand(new Command("rotateTank", pathToTraverse.getRotationAngle()));
-					Thread.sleep(Math.round(pathToTraverse.getRotationDuration()));
+					Thread.sleep(Math.min(Math.round(pathToTraverse.getRotationDuration()), 1000));
 
-					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 0.33));
-					Thread.sleep(Math.round(pathToTraverse.getMovementDuration()));
+					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 0.345));
+					Thread.sleep(Math.min(Math.round(pathToTraverse.getMovementDuration()), 1000));
 
 					dispatcher.sendCommand(new Command("stop", "moving"));
-
-					Thread.sleep(2000);
 
 				} else {
 					System.out.println("DEBUG: Threads not yet in sync. Waiting 1 second...");

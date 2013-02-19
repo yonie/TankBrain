@@ -59,13 +59,13 @@ public class Path {
 	public double getRotationAngle() {
 
 		double distanceX = destinationPlace.getX() - startingPlace.getX();
-		double distanceY = destinationPlace.getY() - startingPlace.getY();
+		double distanceY = -(destinationPlace.getY() - startingPlace.getY());
 
 		// do math magic to get new angle
 		double newAngle = Math.toDegrees(Math.atan2(distanceY, distanceX));
 
-		// make sure to take the starting angle into account
-		double rotationAngle = newAngle - startingAngle;
+		// incorporate the starting angle and server offset of 90 degrees
+		double rotationAngle = (newAngle - startingAngle) + 90;
 
 		// fix angles that end up lower than -180 degrees
 		if (rotationAngle < -180)
