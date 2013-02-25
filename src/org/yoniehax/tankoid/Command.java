@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 public class Command {
 	private String command;
 	private String param;

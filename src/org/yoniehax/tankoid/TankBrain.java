@@ -1,3 +1,7 @@
+package org.yoniehax.tankoid;
+
+import org.yoniehax.helper.QuickLog;
+
 public class TankBrain {
 
 	// the remote host at which the server resides
@@ -23,9 +27,9 @@ public class TankBrain {
 	static final int tankColorBlue = 20;
 
 	public static void main(String[] args) {
-		System.out.println("DEBUG: Begin...");
+		QuickLog.debug("Begin...");
 		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort, upstreamPort, majorVersion, minorVersion,
 				revisionVersion, userName, tankColorRed, tankColorGreen, tankColorBlue);
-		System.out.println("DEBUG: End.");
+		QuickLog.debug("End.");
 	}
 }

@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 import static org.junit.Assert.*;
 
 import org.junit.Before;

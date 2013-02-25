@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.net.Socket;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.yoniehax.helper.QuickLog;
 
 public class Dispatcher {
 
@@ -89,15 +91,15 @@ public class Dispatcher {
 					tankColorGreen, tankColorBlue, majorVersion, minorVersion, revisionVersion);
 
 			// send connect upstream message
-			System.out.println("DEBUG: Connecting upstream: " + connectUpstreamChannelMessage.toString());
+			QuickLog.debug("Connecting upstream: " + connectUpstreamChannelMessage.toString());
 			upstreamOutput.write(connectUpstreamChannelMessage.toString());
 			upstreamOutput.newLine();
 			upstreamOutput.flush();
 
 			// get response
-			System.out.println("DEBUG: Awaiting response...");
+			QuickLog.debug("DEBUG: Awaiting response...");
 			String connectUpstreamResponse = upstreamInput.readLine();
-			System.out.println("DEBUG: Got response: " + connectUpstreamResponse);
+			QuickLog.debug("DEBUG: Got response: " + connectUpstreamResponse);
 
 			// parse response
 			JSONObject connectionAcceptedJSON = new JSONObject(connectUpstreamResponse)
@@ -118,19 +120,19 @@ public class Dispatcher {
 					minorVersion, revisionVersion);
 
 			// send connect downstream message
-			System.out.println("DEBUG: Connecting downstream: " + connectDownstreamChannelMessage.toString());
+			QuickLog.debug("Connecting downstream: " + connectDownstreamChannelMessage.toString());
 			downstreamOutput.write(connectDownstreamChannelMessage.toString());
 			downstreamOutput.newLine();
 			downstreamOutput.flush();
 
 			// get response
-			System.out.println("DEBUG: Awaiting response...");
+			QuickLog.debug("Awaiting response...");
 			String connectDownstreamResponse = downstreamInput.readLine();
-			System.out.println("DEBUG: Got response: " + connectDownstreamResponse);
+			QuickLog.debug("Got response: " + connectDownstreamResponse);
 
 			// parse connect response and fetch initial game state
 			JSONObject initialGameState = new JSONObject(connectDownstreamResponse).getJSONObject("welcomeToGame");
-			System.out.println("DEBUG: Welcome to game: " + initialGameState.toString());
+			QuickLog.debug("Welcome to game: " + initialGameState.toString());
 
 			// fetch rules object from initial game state
 			JSONObject jsonRules = initialGameState.getJSONObject("rules");
@@ -141,21 +143,37 @@ public class Dispatcher {
 					jsonRules.getDouble("turretRotationSpeed"), jsonRules.getDouble("fireInterval"),
 					jsonRules.getDouble("ballisticsTravelSpeed"), jsonRules.getInt("fieldOfView"),
 					jsonRules.getInt("turretFieldOfView"), jsonRules.getInt("hp"), jsonRules.getInt("ballisticDamage"),
-					jsonRules.getInt("enemyHitScore"), jsonRules.getInt("enemyKillScore"));
+					jsonRules.getInt("enemyHitScore"), jsonRules.getInt("enemyKillScore"),
+					jsonRules.getInt("tankStatusUpdateRate"));
 			processor = new Processor(this, gameRules);
 
 			processor.start();
-			
-			String rawContext;
+
+			JSONObject gameWillStart = new JSONObject(downstreamInput.readLine()).getJSONObject("gameWillStart");
+			QuickLog.debug("Got gameWillStart: " + gameWillStart);
+
+			String serverResponse;
 
 			// listen for input (blocking)
-			while ((rawContext = downstreamInput.readLine()) != null) {
+			while ((serverResponse = downstreamInput.readLine()) != null) {
 
-				// parse context object out of raw JSON context
-				Context context = new Context(new JSONObject(rawContext).getJSONObject("tankStatusUpdate"));
+				QuickLog.debug("Received server response: " + serverResponse);
 
-				// process context
-				processor.processContext(context);
+				JSONObject serverResponseJSON = new JSONObject(serverResponse);
+
+				if (serverResponseJSON.has("tankStatusUpdate")) {
+
+					// parse context object out of raw JSON context
+					StatusUpdate statusUpdate = new StatusUpdate(serverResponseJSON.getJSONObject("tankStatusUpdate"));
+
+					// process context
+					processor.processStatusUpdate(statusUpdate);
+					
+				} else {
+
+					QuickLog.error("Could not process status update: " + serverResponseJSON);
+					
+				}
 
 			}
 
@@ -197,7 +215,6 @@ public class Dispatcher {
 			JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
 			if (jsonCommandAck.has("errorOccurred")) {
 
-				System.out.println("DEBUG: Recieved an error: " + jsonCommandAck.toString());
 
 				// build error
 				CommandExecutionError error = new CommandExecutionError(jsonCommandAck.getJSONObject("errorOccurred")

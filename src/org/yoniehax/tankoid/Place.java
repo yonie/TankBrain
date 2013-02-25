@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 public class Place {
 
 	private double x;

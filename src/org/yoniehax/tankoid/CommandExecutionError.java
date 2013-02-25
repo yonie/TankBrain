@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 public class CommandExecutionError {
 	private String executingCommand;
 	private String reason;

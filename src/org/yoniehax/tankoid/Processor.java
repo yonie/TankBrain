@@ -1,10 +1,14 @@
+package org.yoniehax.tankoid;
+
+import org.yoniehax.helper.QuickLog;
+
 public class Processor extends Thread {
 
 	private Dispatcher dispatcher;
 	private Rules rules;
 	private boolean running;
 	private HeatMap heatMap;
-	private Context lastRecievedContext;
+	private StatusUpdate lastRecievedContext;
 	private int heatMapSize;
 	private int mode;
 	private Place targetPlace;
@@ -31,7 +35,7 @@ public class Processor extends Thread {
 		this.mode = RANDOM;
 
 		// TODO: dynamic array dimensions based on server grid
-		this.heatMapSize = 50;
+		this.heatMapSize = 1000;
 
 		heatMap = new HeatMap(heatMapSize);
 	}
@@ -42,7 +46,7 @@ public class Processor extends Thread {
 	 * @param context
 	 *            the latest Context.
 	 */
-	public void processContext(Context context) {
+	public void processStatusUpdate(StatusUpdate context) {
 
 		lastRecievedContext = context;
 
@@ -58,7 +62,7 @@ public class Processor extends Thread {
 	 */
 	public void run() {
 
-		System.out.println("DEBUG: Running the thread...");
+		QuickLog.debug("Running the thread...");
 
 		while (running) {
 
@@ -69,25 +73,28 @@ public class Processor extends Thread {
 					double currentAngle = lastRecievedContext.getOwnTank().getAngle();
 
 					if (targetPlace == null || targetPlace.isNearby(currentPlace)) {
-						System.out.println("DEBUG: Setting new target!");
+						QuickLog.info("Setting new target!");
 						setNewTarget();
 					}
 
 					Path pathToTraverse = new Path(currentPlace, targetPlace, currentAngle, rules.getMovementSpeed(),
 							rules.getRotationSpeed());
 
-					System.out.println("DEBUG: Path to traverse: " + pathToTraverse);
+					QuickLog.debug("Path to traverse: " + pathToTraverse);
 
-					dispatcher.sendCommand(new Command("rotateTank", pathToTraverse.getRotationAngle()));
-					Thread.sleep(Math.min(Math.round(pathToTraverse.getRotationDuration()), 1000));
+					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5)
+						dispatcher.sendCommand(new Command("rotateTankWithSpeed",
+								(pathToTraverse.getRotationAngle() > 0 ? 1 : -1)));
+					// Thread.sleep((long)
+					// pathToTraverse.getRotationDuration());
 
-					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 0.345));
-					Thread.sleep(Math.min(Math.round(pathToTraverse.getMovementDuration()), 1000));
-
+					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
+					Thread.sleep((long) Math.min(pathToTraverse.getMovementDuration(), 1000));
+					dispatcher.sendCommand(new Command("stop", "tankRotation"));
 					dispatcher.sendCommand(new Command("stop", "moving"));
 
 				} else {
-					System.out.println("DEBUG: Threads not yet in sync. Waiting 1 second...");
+					QuickLog.debug("Threads not yet in sync. Waiting 1 second...");
 					Thread.sleep(1000);
 				}
 			} catch (InterruptedException e) {
@@ -111,7 +118,7 @@ public class Processor extends Thread {
 	 */
 	private void setNewTarget() {
 		if (mode == TEST)
-			targetPlace = new Place(10, 0);
+			targetPlace = new Place(500, 500);
 		else if (mode == RANDOM)
 			targetPlace = heatMap.findRandomPlace();
 		else if (mode == QUIET)
@@ -129,7 +136,7 @@ public class Processor extends Thread {
 	 */
 	public void processError(CommandExecutionError error) {
 
-		System.out.println("DEBUG: Processing error with reason: " + error.getReason());
+		QuickLog.debug("Processing error with reason: " + error.getReason());
 
 		// TODO: do some fancy error handling here
 

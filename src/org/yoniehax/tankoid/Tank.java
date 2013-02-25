@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 public class Tank {
 	Place place;
 	double tankAngle;

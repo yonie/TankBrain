@@ -1,3 +1,4 @@
+package org.yoniehax.tankoid;
 public class Path {
 
 	private Place startingPlace;
@@ -64,8 +65,8 @@ public class Path {
 		// do math magic to get new angle
 		double newAngle = Math.toDegrees(Math.atan2(distanceY, distanceX));
 
-		// incorporate the starting angle and server offset of 90 degrees
-		double rotationAngle = (newAngle - startingAngle) + 90;
+		// incorporate the starting angle
+		double rotationAngle = (newAngle - startingAngle);
 
 		// fix angles that end up lower than -180 degrees
 		if (rotationAngle < -180)
@@ -126,8 +127,15 @@ public class Path {
 	 */
 	public String toString() {
 		return "From: (" + startingPlace + "), to: (" + destinationPlace + "), distance: " + getDistance()
-				+ ", starting angle: " + startingAngle + ", rotation angle: " + getRotationAngle()
-				+ ", movement speed: " + movementSpeed + ", rotation speed: " + rotationSpeed + ", movement duration: "
-				+ this.getMovementDuration();
+				+ ", rotation angle: " + getRotationAngle();
+	}
+
+	/**
+	 * Gets the tank rotation speed.
+	 * 
+	 * @return the rotation speed.
+	 */
+	public double getRotationSpeed() {
+		return rotationSpeed;
 	}
 }

@@ -1,3 +1,5 @@
+package org.yoniehax.tankoid;
+
 public class Rules {
 
 	private double movementSpeed;
@@ -11,7 +13,8 @@ public class Rules {
 	private int ballisticDamage;
 	private int enemyHitScore;
 	private int enemyKillScore;
-	
+	private int tankStatusUpdateRate;
+
 	/**
 	 * 
 	 * @param movementSpeed
@@ -26,10 +29,10 @@ public class Rules {
 	 * @param enemyHitScore
 	 * @param enemyKillScore
 	 */
-	public Rules(double movementSpeed, double rotationSpeed, double turretRotationSpeed,
-			double fireInterval, double ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints,
-			int ballisticDamage, int enemyHitScore, int enemyKillScore) {
-	
+	public Rules(double movementSpeed, double rotationSpeed, double turretRotationSpeed, double fireInterval,
+			double ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints, int ballisticDamage,
+			int enemyHitScore, int enemyKillScore, int tankStatusUpdateRate) {
+
 		this.movementSpeed = movementSpeed;
 		this.rotationSpeed = rotationSpeed;
 		this.turretRotationSpeed = turretRotationSpeed;
@@ -41,9 +44,10 @@ public class Rules {
 		this.ballisticDamage = ballisticDamage;
 		this.enemyHitScore = enemyHitScore;
 		this.enemyKillScore = enemyKillScore;
+		this.tankStatusUpdateRate = tankStatusUpdateRate;
 
 	}
-	
+
 	/**
 	 * 
 	 * @return

@@ -1,3 +1,7 @@
+package org.yoniehax.tankoid;
+
+import org.yoniehax.helper.QuickLog;
+
 public class HeatMap {
 
 	private int heatMapSize;
@@ -129,15 +133,16 @@ public class HeatMap {
 	public void dumpHeatMapToSysOut() {
 		for (int map = 0; map < 4; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
-				System.out.print("DEBUG: map= " + map + ", x=" + x + "\t");
+				String dump;
+				dump = "DEBUG: map= " + map + ", x=" + x + "\t";
 				for (int y = 0; y < heatMapSize; y++) {
 					if (heatMap[map][x][y] == 0)
-						System.out.print("[  ]");
+						dump += "[  ]";
 					else
-						System.out.print("["
-								+ (heatMap[map][x][y] < 10 ? " " + heatMap[map][x][y] : heatMap[map][x][y]) + "]");
+						dump += "["
+								+ (heatMap[map][x][y] < 10 ? " " + heatMap[map][x][y] : heatMap[map][x][y]) + "]";
 				}
-				System.out.println();
+				QuickLog.debug(dump);
 			}
 		}
 	}

@@ -1,7 +1,8 @@
+package org.yoniehax.tankoid;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Context {
+public class StatusUpdate {
 	private Tank ownTank;
 	private boolean isMoving;
 	private boolean isRotating;
@@ -16,19 +17,17 @@ public class Context {
 	 * 
 	 * @param JSONcontext
 	 */
-	public Context(JSONObject JSONcontext) {
+	public StatusUpdate(JSONObject JSONcontext) {
 		try {
 			ownTank = new Tank(JSONcontext.getJSONObject("position").getDouble("x"), JSONcontext.getJSONObject(
 					"position").getDouble("y"), JSONcontext.getDouble("direction"),
 					JSONcontext.getDouble("turretDirection"));
-			isMoving = (JSONcontext.getString("isMoving").equals("YES") ? true : false);
-			isRotating = (JSONcontext.getString("isRotating").equals("YES") ? true : false);
-			isTurretRotating = (JSONcontext.getString("isTurretRotating").equals("YES") ? true : false);
+			isMoving = JSONcontext.getBoolean("isMoving");
+			isRotating = JSONcontext.getBoolean("isRotating");
+			isTurretRotating = JSONcontext.getBoolean("isTurretRotating");
 
-			// TODO: this doesn't work yet in 0.3.0
-			// isPerformingScan =
-			// (JSONcontext.getString("isPerformingScan").equals("YES") ? true :
-			// false);
+			// TODO: this doesn't work yet in 0.4.x
+			// isPerformingScan = JSONcontext.getString("isPerformingScan");
 
 			// TODO: objectsInFieldOfView
 
