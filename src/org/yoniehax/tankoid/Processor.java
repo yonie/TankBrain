@@ -13,6 +13,9 @@ public class Processor extends Thread {
 	private int mode;
 	private Place targetPlace;
 
+	private double rotationSpeedCorrection;
+	private double movementSpeedCorrection;
+
 	final int TEST = 0;
 	final int RANDOM = 1;
 	final int QUIET = 2;
@@ -67,31 +70,77 @@ public class Processor extends Thread {
 		while (running) {
 
 			try {
+
 				if (lastRecievedContext != null) {
 
-					Place currentPlace = lastRecievedContext.getOwnTank().getPlace();
-					double currentAngle = lastRecievedContext.getOwnTank().getAngle();
+					Place startingPlace = lastRecievedContext.getOwnTank().getPlace();
+					double startingAngle = lastRecievedContext.getOwnTank().getAngle();
 
-					if (targetPlace == null || targetPlace.isNearby(currentPlace)) {
+					while (targetPlace == null || targetPlace.isNearby(startingPlace)) {
 						QuickLog.info("Setting new target!");
 						setNewTarget();
 					}
 
-					Path pathToTraverse = new Path(currentPlace, targetPlace, currentAngle, rules.getMovementSpeed(),
-							rules.getRotationSpeed());
+					// make patch, include speed correction
+					Path pathToTraverse = new Path(startingPlace, targetPlace, startingAngle, rules.getMovementSpeed()
+							* (1 + (movementSpeedCorrection / 100)), rules.getRotationSpeed()
+							* (1 + (rotationSpeedCorrection / 100)));
 
 					QuickLog.debug("Path to traverse: " + pathToTraverse);
 
-					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5)
+					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5) {
+						QuickLog.debug("Rotating for " + pathToTraverse.getRotationDuration() / 1000 + " seconds...");
 						dispatcher.sendCommand(new Command("rotateTankWithSpeed",
 								(pathToTraverse.getRotationAngle() > 0 ? 1 : -1)));
-					// Thread.sleep((long)
-					// pathToTraverse.getRotationDuration());
+						Thread.sleep((long) (pathToTraverse.getRotationDuration()));
+						dispatcher.sendCommand(new Command("stop", "tankRotation"));
 
-					dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
-					Thread.sleep((long) Math.min(pathToTraverse.getMovementDuration(), 1000));
-					dispatcher.sendCommand(new Command("stop", "tankRotation"));
-					dispatcher.sendCommand(new Command("stop", "moving"));
+						// calibrate rotation speed
+						if (pathToTraverse.getRotationDuration() > 5000) {
+
+							// allow for the latest context to be sent
+							Thread.sleep(500);
+
+							Place endingPlace = lastRecievedContext.getOwnTank().getPlace();
+							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
+									rules.getMovementSpeed(), rules.getRotationSpeed());
+
+							double rotationSpeedDifference = (((pathActuallyTraversed.getRotationAngle() - pathToTraverse
+									.getRotationAngle()) / pathToTraverse.getRotationAngle()) * 100);
+							QuickLog.info("Planned angle: " + pathToTraverse.getRotationAngle() + ", actual angle: "
+									+ pathActuallyTraversed.getRotationAngle() + ", difference: "
+									+ rotationSpeedDifference + "%.");
+							rotationSpeedCorrection = rotationSpeedCorrection + (rotationSpeedDifference / 10);
+							QuickLog.info("New rotation speed correction: " + rotationSpeedCorrection + "%");
+						}
+
+					}
+
+					if (!startingPlace.isNearby(targetPlace)) {
+						QuickLog.debug("Moving for " + pathToTraverse.getMovementDuration() / 1000 + " seconds...");
+						dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
+						Thread.sleep((long) (pathToTraverse.getMovementDuration()));
+						dispatcher.sendCommand(new Command("stop", "moving"));
+
+						// calibrate movement speed
+						if (pathToTraverse.getMovementDuration() > 5000) {
+
+							// allow for the latest context to be sent
+							Thread.sleep(500);
+
+							Place endingPlace = lastRecievedContext.getOwnTank().getPlace();
+							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
+									rules.getMovementSpeed(), rules.getRotationSpeed());
+
+							double movementSpeedDifference = (((pathActuallyTraversed.getDistance() - pathToTraverse
+									.getDistance()) / pathToTraverse.getDistance()) * 100);
+							QuickLog.info("Planned movement: " + pathToTraverse.getDistance() + ", actual movement: "
+									+ pathActuallyTraversed.getDistance() + ", difference: " + movementSpeedDifference
+									+ "%.");
+							movementSpeedCorrection = movementSpeedCorrection + (movementSpeedDifference / 10);
+							QuickLog.info("New movement speed correction: " + movementSpeedCorrection + "%");
+						}
+					}
 
 				} else {
 					QuickLog.debug("Threads not yet in sync. Waiting 1 second...");
