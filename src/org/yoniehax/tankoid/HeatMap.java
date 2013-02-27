@@ -52,7 +52,8 @@ public class HeatMap {
 		int mostCrowdedPlaceX = 0;
 		int mostCrowdedPlaceY = 0;
 
-		for (int map = 0; map < 4; map++) {
+		// FIXME: we only work with positive coordinates
+		for (int map = 1; map < 2; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
 				for (int y = 0; y < heatMapSize; y++) {
 					if (heatMap[map][x][y] > heatMap[map][mostCrowdedPlaceX][mostCrowdedPlaceY]) {
@@ -85,7 +86,8 @@ public class HeatMap {
 		int quietPlaceY = 0;
 		int quietPlaceMap = 0;
 
-		for (int map = 0; map < 4; map++) {
+		// FIXME: we only work with positive coordinates
+		for (int map = 1; map < 2; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
 				for (int y = 0; y < heatMapSize; y++) {
 					if (heatMap[map][x][y] < heatMap[quietPlaceMap][quietPlaceX][quietPlaceY]) {
@@ -113,7 +115,8 @@ public class HeatMap {
 	 * @return a random Place.
 	 */
 	public Place findRandomPlace() {
-		int map = (int) (Math.random() * 3);
+		// FIXME: we only work with positive coordinates
+		int map = 1; //(int) (Math.random() * 3);
 		int x = (int) (Math.random() * heatMapSize);
 		int y = (int) (Math.random() * heatMapSize);
 
@@ -131,7 +134,8 @@ public class HeatMap {
 	 * Dumps the current heatMap to System.out for debug purposes.
 	 */
 	public void dumpHeatMapToSysOut() {
-		for (int map = 0; map < 4; map++) {
+		// FIXME: we only work with positive coordinates
+		for (int map = 1; map < 2; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
 				String dump;
 				dump = "DEBUG: map= " + map + ", x=" + x + "\t";
