@@ -1,4 +1,5 @@
 package org.yoniehax.tankoid;
+
 public class Path {
 
 	private Place startingPlace;
@@ -8,20 +9,20 @@ public class Path {
 	private double rotationSpeed;
 
 	/**
-	 * A <b>Path</b> is used to store a route from a starting place to a
-	 * destination place. The route has a starting angle, a movement and tank
-	 * rotation speed.
+	 * A <b>Path</b> is used to store a route a Tank takes from a starting place
+	 * to a destination place. The route has a starting angle, a movement and
+	 * Tank rotation speed.
 	 * 
 	 * @param startingPlace
 	 *            the starting Place of the Path.
 	 * @param destinationPlace
 	 *            the destination Place of the Path.
 	 * @param startingAngle
-	 *            the starting angle of the tank.
+	 *            the starting angle of the Tank.
 	 * @param movementSpeed
 	 *            the movement speed used to traverse this path.
 	 * @param rotationSpeed
-	 *            the rotation speed of the tank.
+	 *            the rotation speed of the Tank.
 	 */
 	public Path(Place startingPlace, Place destinationPlace, double startingAngle, double movementSpeed,
 			double rotationSpeed) {
@@ -89,7 +90,7 @@ public class Path {
 	}
 
 	/**
-	 * Gets the starting Place for this path.
+	 * Gets the starting Place for this Path.
 	 * 
 	 * @return the starting Place.
 	 */
@@ -109,7 +110,7 @@ public class Path {
 	/**
 	 * Gets the distance between the starting Place and destination Place of
 	 * this Path. Note that the actual distance might vary based on the route
-	 * the tank will choose to take.
+	 * the Tank will choose to take.
 	 * 
 	 * @return the distance between the starting Place and destination Place of
 	 *         this Path.
@@ -131,7 +132,7 @@ public class Path {
 	}
 
 	/**
-	 * Gets the tank rotation speed.
+	 * Gets the Tank rotation speed.
 	 * 
 	 * @return the rotation speed.
 	 */

@@ -1,25 +1,33 @@
 package org.yoniehax.tankoid;
+
 public class Command {
 	private String command;
 	private String param;
 
 	/**
-	 * A Command is used to store any command that is sent to the server.
+	 * A <b>Command</b> is used to store any command that can be sent to the
+	 * server. Every command consists of two parts: the actual command to send
+	 * and a parameter.
 	 * 
 	 * @param command
-	 *            The first hand of the command.
+	 *            The actual command to send
 	 * @param param
-	 *            The second hand of the command.
+	 *            The parameter to send along with the command
 	 */
 	public Command(String command, String param) {
 		this.command = command;
 		this.param = param;
 	}
-	
+
 	/**
+	 * A <b>Command</b> is used to store any command that can be sent to the
+	 * server. Every command consists of two parts: the actual command to send
+	 * and a parameter.
 	 * 
 	 * @param command
+	 *            The actual command to send
 	 * @param param
+	 *            The parameter to send along with the command
 	 */
 	public Command(String command, Double param) {
 		this.command = command;
@@ -27,9 +35,14 @@ public class Command {
 	}
 
 	/**
+	 * A <b>Command</b> is used to store any command that can be sent to the
+	 * server. Every command consists of two parts: the actual command to send
+	 * and a parameter associated with the command.
 	 * 
 	 * @param command
+	 *            The actual command to send
 	 * @param param
+	 *            The parameter associated with the command
 	 */
 	public Command(String command, int param) {
 		this.command = command;
@@ -37,18 +50,18 @@ public class Command {
 	}
 
 	/**
-	 * Returns the first hand of the command.
+	 * Returns the actual command to send.
 	 * 
-	 * @return The first hand of the command.
+	 * @return The actual command to send
 	 */
 	public String getCommand() {
 		return command;
 	}
 
 	/**
-	 * Returns the second hand of the command
+	 * Returns the parameter associated with the command.
 	 * 
-	 * @return The second hand of the command.
+	 * @return The parameter associated with the command
 	 */
 	public String getParam() {
 		return param;

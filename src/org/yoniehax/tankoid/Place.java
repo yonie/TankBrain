@@ -1,4 +1,5 @@
 package org.yoniehax.tankoid;
+
 public class Place {
 
 	private double x;
@@ -35,21 +36,12 @@ public class Place {
 		return y;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return "x=" + x + ", y=" + y;
-	}
-
 	/**
 	 * Determines if this Place is nearby given other place.
 	 * 
 	 * @param otherPlace
 	 *            the other Place to compare to.
-	 * @return true if this Place is within 3 units of the other place,
+	 * @return true if this Place is within 5 units of the other place,
 	 *         otherwise false.
 	 */
 	public boolean isNearby(Place otherPlace) {
@@ -58,7 +50,16 @@ public class Place {
 		double distanceX = this.getX() - otherPlace.getX();
 		double distanceY = this.getY() - otherPlace.getY();
 		double totalDistance = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
-		return (totalDistance < 3 ? true : false);
+		return (totalDistance < 5 ? true : false);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "x=" + x + ", y=" + y;
 	}
 
 }

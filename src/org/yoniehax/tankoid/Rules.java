@@ -16,18 +16,30 @@ public class Rules {
 	private int tankStatusUpdateRate;
 
 	/**
+	 * The <b>Rules</b> object is used to store game rules.
 	 * 
 	 * @param movementSpeed
+	 *            maximum movement speed of the Tank
 	 * @param rotationSpeed
+	 *            maximum rotation speed of the Tank
 	 * @param turretRotationSpeed
+	 *            rotation speed of the Tank turret
 	 * @param fireInterval
+	 *            fire interval of the Tank
 	 * @param ballisticsTravelSpeed
+	 *            travel speed for ballistics
 	 * @param fieldOfView
+	 *            FOV for the Tank
 	 * @param turretFieldOfView
+	 *            FOV for the Tank turret
 	 * @param hitPoints
+	 *            amount of hit points for the Tank
 	 * @param ballisticDamage
+	 *            damage caused by ballistics
 	 * @param enemyHitScore
+	 *            point reward for hitting enemies
 	 * @param enemyKillScore
+	 *            point reward for killing enemies
 	 */
 	public Rules(double movementSpeed, double rotationSpeed, double turretRotationSpeed, double fireInterval,
 			double ballisticsTravelSpeed, int fieldOfView, int turretFieldOfView, int hitPoints, int ballisticDamage,
@@ -49,16 +61,18 @@ public class Rules {
 	}
 
 	/**
+	 * Gets the Tank maximum rotation speed.
 	 * 
-	 * @return
+	 * @return the Tank maximum rotation speed
 	 */
 	public double getRotationSpeed() {
 		return rotationSpeed;
 	}
 
 	/**
+	 * Gets the maximum Tank movement speed.
 	 * 
-	 * @return
+	 * @return the maximum Tank movement speed
 	 */
 	public double getMovementSpeed() {
 		return movementSpeed;

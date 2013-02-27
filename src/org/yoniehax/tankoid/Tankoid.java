@@ -27,9 +27,9 @@ public class Tankoid {
 	static final int tankColorBlue = 20;
 
 	public static void main(String[] args) {
-		QuickLog.debug("Begin...");
+		QuickLog.info("Begin...");
 		Dispatcher dispatcher = new Dispatcher(remoteHost, downstreamPort, upstreamPort, majorVersion, minorVersion,
 				revisionVersion, userName, tankColorRed, tankColorGreen, tankColorBlue);
-		QuickLog.debug("End.");
+		QuickLog.info("End.");
 	}
 }

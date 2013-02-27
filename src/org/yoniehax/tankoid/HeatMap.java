@@ -1,7 +1,5 @@
 package org.yoniehax.tankoid;
 
-import org.yoniehax.helper.QuickLog;
-
 public class HeatMap {
 
 	private int heatMapSize;
@@ -18,11 +16,13 @@ public class HeatMap {
 	 */
 	public HeatMap(int heatMapSize) {
 		this.heatMapSize = heatMapSize;
+
+		// 4 arrays to store both positive and negative coordinates
 		heatMap = new int[4][heatMapSize][heatMapSize];
 	}
 
 	/**
-	 * Increments the HeatMap on a specific Place.
+	 * Increments the HeatMap on a specific Place, to make it 'more warm'.
 	 * 
 	 * @param place
 	 *            the Place that should be incremented in the HeatMap.
@@ -42,7 +42,7 @@ public class HeatMap {
 	}
 
 	/**
-	 * Finds the most crowded place (with most hits) in the heatMap.
+	 * Finds the most crowded Place (with most hits) in the HeatMap.
 	 * 
 	 * @return the most crowded Place. If more than one place has the same
 	 *         amount of hits, the first found place will be returned.
@@ -52,7 +52,7 @@ public class HeatMap {
 		int mostCrowdedPlaceX = 0;
 		int mostCrowdedPlaceY = 0;
 
-		// FIXME: we only work with positive coordinates
+		// FIXME: we only work with positive coordinates (array 1) for now
 		for (int map = 1; map < 2; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
 				for (int y = 0; y < heatMapSize; y++) {
@@ -76,17 +76,17 @@ public class HeatMap {
 	}
 
 	/**
-	 * Finds a quiet place (with least hits) in the heatMap.
+	 * Finds a quiet Place (with least hits) in the HeatMap.
 	 * 
-	 * @return the most quiet Place. If more than one place has the same amount
-	 *         of hits, the first found place will be returned.
+	 * @return the most quiet Place. If more than one Place has the same amount
+	 *         of hits, the first found Place will be returned.
 	 */
 	public Place findQuietPlace() {
 		int quietPlaceX = 0;
 		int quietPlaceY = 0;
 		int quietPlaceMap = 0;
 
-		// FIXME: we only work with positive coordinates
+		// FIXME: we only work with positive coordinates (array 1) for now
 		for (int map = 1; map < 2; map++) {
 			for (int x = 0; x < heatMapSize; x++) {
 				for (int y = 0; y < heatMapSize; y++) {
@@ -110,13 +110,13 @@ public class HeatMap {
 	}
 
 	/**
-	 * Finds a random place on the heatMap.
+	 * Finds a random Place on the HeatMap.
 	 * 
 	 * @return a random Place.
 	 */
 	public Place findRandomPlace() {
-		// FIXME: we only work with positive coordinates
-		int map = 1; //(int) (Math.random() * 3);
+		// FIXME: we only work with positive coordinates (array 1) for now
+		int map = 1; // (int) (Math.random() * 3);
 		int x = (int) (Math.random() * heatMapSize);
 		int y = (int) (Math.random() * heatMapSize);
 
@@ -128,27 +128,6 @@ public class HeatMap {
 			return new Place(-x, -y);
 		else
 			return new Place(x, -y);
-	}
-
-	/**
-	 * Dumps the current heatMap to System.out for debug purposes.
-	 */
-	public void dumpHeatMapToSysOut() {
-		// FIXME: we only work with positive coordinates
-		for (int map = 1; map < 2; map++) {
-			for (int x = 0; x < heatMapSize; x++) {
-				String dump;
-				dump = "DEBUG: map= " + map + ", x=" + x + "\t";
-				for (int y = 0; y < heatMapSize; y++) {
-					if (heatMap[map][x][y] == 0)
-						dump += "[  ]";
-					else
-						dump += "["
-								+ (heatMap[map][x][y] < 10 ? " " + heatMap[map][x][y] : heatMap[map][x][y]) + "]";
-				}
-				QuickLog.debug(dump);
-			}
-		}
 	}
 
 }
