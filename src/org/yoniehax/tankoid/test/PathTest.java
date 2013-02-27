@@ -1,8 +1,10 @@
-package org.yoniehax.tankoid;
+package org.yoniehax.tankoid.test;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.yoniehax.tankoid.Path;
+import org.yoniehax.tankoid.Place;
 
 public class PathTest {
 
