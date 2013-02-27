@@ -2,7 +2,7 @@ package org.yoniehax.tankoid;
 
 import org.yoniehax.helper.QuickLog;
 
-public class TankBrain {
+public class Tankoid {
 
 	// the remote host at which the server resides
 	static final String remoteHost = "localhost";
