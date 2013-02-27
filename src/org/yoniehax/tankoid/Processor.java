@@ -8,23 +8,24 @@ public class Processor extends Thread {
 	private Rules rules;
 	private boolean running;
 	private HeatMap heatMap;
-	private StatusUpdate lastRecievedContext;
+	private Tank ownTank;
 	private int heatMapSize;
 	private int mode;
 	private Place targetPlace;
 
-	private double rotationSpeedCorrection;
 	private double movementSpeedCorrection;
 
+	// processor modes
 	final int TEST = 0;
 	final int RANDOM = 1;
 	final int QUIET = 2;
 	final int BUSY = 3;
 
 	/**
-	 * The Processor is the brains of the tank. It determines where to move,
-	 * whether to shoot, and so on. To operate the Processor needs a Dispatcher
-	 * that is the communication link to the server, and game Rules to live by.
+	 * The <b>Processor</b> is the brains of the Tank. It determines where to
+	 * move, whether to shoot, and so on. To operate the Processor needs a
+	 * Dispatcher that is the communication link to the server, and game Rules
+	 * to live by.
 	 * 
 	 * @param dispatcher
 	 *            The Dispatcher to send Commands to.
@@ -37,26 +38,24 @@ public class Processor extends Thread {
 		this.running = true;
 		this.mode = RANDOM;
 
-		// TODO: dynamic array dimensions based on server grid
-		this.heatMapSize = 1000;
+		// TODO: dynamic array dimensions based on server
+		this.heatMapSize = 1001;
 
 		heatMap = new HeatMap(heatMapSize);
 	}
 
 	/**
-	 * Updates the processor with the latest game Context.
+	 * Updates the processor with the latest game StatusUpdate.
 	 * 
-	 * @param context
-	 *            the latest Context.
+	 * @param statusUpdate
+	 *            the latest StatusUpdate.
 	 */
-	public void processStatusUpdate(StatusUpdate context) {
+	public void processTankStatusUpdate(Tank ownTank) {
 
-		lastRecievedContext = context;
+		this.ownTank = ownTank;
 
-		// TODO: save other tanks' coordinates instead of my own
-
-		// save coordinates in heatMap
-		heatMap.increment(lastRecievedContext.getOwnTank().getPlace());
+		// save own coordinates in heatMap
+		heatMap.increment(ownTank.getPlace());
 	}
 
 	/**
@@ -71,51 +70,33 @@ public class Processor extends Thread {
 
 			try {
 
-				if (lastRecievedContext != null) {
+				if (ownTank != null) {
 
-					Place startingPlace = lastRecievedContext.getOwnTank().getPlace();
-					double startingAngle = lastRecievedContext.getOwnTank().getAngle();
+					Place startingPlace = ownTank.getPlace();
+					double startingAngle = ownTank.getAngle();
 
+					// check if we need to set a new target
 					while (targetPlace == null || targetPlace.isNearby(startingPlace)) {
 						QuickLog.info("Setting new target!");
 						setNewTarget();
 					}
 
-					// make patch, include speed correction
+					// determine path, include speed correction
 					Path pathToTraverse = new Path(startingPlace, targetPlace, startingAngle, rules.getMovementSpeed()
-							* (1 + (movementSpeedCorrection / 100)), rules.getRotationSpeed()
-							* (1 + (rotationSpeedCorrection / 100)));
+							* (1 - (movementSpeedCorrection / 100)), rules.getRotationSpeed());
 
-					QuickLog.debug("Path to traverse: " + pathToTraverse);
+					QuickLog.info("Path to traverse: " + pathToTraverse);
 
+					// we only rotate for angles bigger than 5 degrees
 					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5) {
 						QuickLog.debug("Rotating for " + pathToTraverse.getRotationDuration() / 1000 + " seconds...");
 						dispatcher.sendCommand(new Command("rotateTankWithSpeed",
 								(pathToTraverse.getRotationAngle() > 0 ? 1 : -1)));
 						Thread.sleep((long) (pathToTraverse.getRotationDuration()));
 						dispatcher.sendCommand(new Command("stop", "tankRotation"));
-
-						// calibrate rotation speed
-						if (pathToTraverse.getRotationDuration() > 5000) {
-
-							// allow for the latest context to be sent
-							Thread.sleep(500);
-
-							Place endingPlace = lastRecievedContext.getOwnTank().getPlace();
-							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
-									rules.getMovementSpeed(), rules.getRotationSpeed());
-
-							double rotationSpeedDifference = (((pathActuallyTraversed.getRotationAngle() - pathToTraverse
-									.getRotationAngle()) / pathToTraverse.getRotationAngle()) * 100);
-							QuickLog.info("Planned angle: " + pathToTraverse.getRotationAngle() + ", actual angle: "
-									+ pathActuallyTraversed.getRotationAngle() + ", difference: "
-									+ rotationSpeedDifference + "%.");
-							rotationSpeedCorrection = rotationSpeedCorrection + (rotationSpeedDifference / 10);
-							QuickLog.info("New rotation speed correction: " + rotationSpeedCorrection + "%");
-						}
-
 					}
 
+					// we only move if we are not nearby our target place
 					if (!startingPlace.isNearby(targetPlace)) {
 						QuickLog.debug("Moving for " + pathToTraverse.getMovementDuration() / 1000 + " seconds...");
 						dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
@@ -125,55 +106,37 @@ public class Processor extends Thread {
 						// calibrate movement speed
 						if (pathToTraverse.getMovementDuration() > 5000) {
 
-							// allow for the latest context to be sent
-							Thread.sleep(500);
+							// allow for the latest tank update to be processed
+							Thread.sleep(250);
 
-							Place endingPlace = lastRecievedContext.getOwnTank().getPlace();
+							Place endingPlace = ownTank.getPlace();
 							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
 									rules.getMovementSpeed(), rules.getRotationSpeed());
 
+							// difference between planned and actual movement
 							double movementSpeedDifference = (((pathActuallyTraversed.getDistance() - pathToTraverse
 									.getDistance()) / pathToTraverse.getDistance()) * 100);
 							QuickLog.info("Planned movement: " + pathToTraverse.getDistance() + ", actual movement: "
 									+ pathActuallyTraversed.getDistance() + ", difference: " + movementSpeedDifference
 									+ "%.");
+
+							// update the correction
 							movementSpeedCorrection = movementSpeedCorrection + (movementSpeedDifference / 10);
 							QuickLog.info("New movement speed correction: " + movementSpeedCorrection + "%");
 						}
 					}
 
 				} else {
-					QuickLog.debug("Threads not yet in sync. Waiting 1 second...");
+
+					// we did not yet receive any tank update yet
+					QuickLog.debug("Still waiting to receive initial tank update...");
 					Thread.sleep(1000);
+
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-
 			}
 		}
-	}
-
-	/**
-	 * 
-	 * @param mode
-	 */
-	public void setMode(int mode) {
-		this.mode = mode;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	private void setNewTarget() {
-		if (mode == TEST)
-			targetPlace = new Place(500, 500);
-		else if (mode == RANDOM)
-			targetPlace = heatMap.findRandomPlace();
-		else if (mode == QUIET)
-			targetPlace = heatMap.findQuietPlace();
-		else
-			targetPlace = heatMap.findMostCrowdedPlace();
 	}
 
 	/**
@@ -192,6 +155,17 @@ public class Processor extends Thread {
 	}
 
 	/**
+	 * Sets the mode the processor uses. This can be either <i>TEST</i>,
+	 * <i>RANDOM</i>, <i>QUIET</i> or <i>BUSY</i>.
+	 * 
+	 * @param mode
+	 *            the mode the processor uses
+	 */
+	public void setMode(int mode) {
+		this.mode = mode;
+	}
+
+	/**
 	 * Sets whether the Processor thread should be running.
 	 * 
 	 * @param running
@@ -199,6 +173,20 @@ public class Processor extends Thread {
 	 */
 	public void setRunning(Boolean running) {
 		this.running = running;
+	}
+
+	/*
+	 * Sets a new target based on the current mode.
+	 */
+	private void setNewTarget() {
+		if (mode == TEST)
+			targetPlace = new Place(500, 500);
+		else if (mode == RANDOM)
+			targetPlace = heatMap.findRandomPlace();
+		else if (mode == QUIET)
+			targetPlace = heatMap.findQuietPlace();
+		else
+			targetPlace = heatMap.findMostCrowdedPlace();
 	}
 
 }

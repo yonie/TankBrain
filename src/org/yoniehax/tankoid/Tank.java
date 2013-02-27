@@ -3,6 +3,9 @@ public class Tank {
 	Place place;
 	double tankAngle;
 	double turretAngle;
+	boolean isMoving;
+	boolean isRotating;
+	boolean isTurrentRotating;
 
 	/**
 	 * The Tank is the main object in game.
@@ -16,10 +19,13 @@ public class Tank {
 	 * @param turretAngle
 	 *            Angle at which the turret of the Tank is pointing.
 	 */
-	public Tank(double x, double y, double tankAngle, double turretAngle) {
+	public Tank(double x, double y, double tankAngle, double turretAngle, boolean isMoving, boolean isRotating, boolean isTurrentRotating) {
 		this.place = new Place(x, y);
 		this.tankAngle = tankAngle;
 		this.turretAngle = turretAngle;
+		this.isMoving = isMoving;
+		this.isRotating = isRotating;
+		this.isTurrentRotating = isTurrentRotating;
 	}
 
 	/**

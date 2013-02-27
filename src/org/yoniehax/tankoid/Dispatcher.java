@@ -1,4 +1,5 @@
 package org.yoniehax.tankoid;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -6,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.yoniehax.helper.QuickLog;
@@ -16,10 +16,6 @@ public class Dispatcher {
 	private Socket upstreamSocket;
 	private BufferedReader upstreamInput;
 	private BufferedWriter upstreamOutput;
-
-	private Socket downstreamSocket;
-	private BufferedReader downstreamInput;
-	private BufferedWriter downstreamOutput;
 
 	private Processor processor;
 	private String remoteHost;
@@ -34,8 +30,8 @@ public class Dispatcher {
 	private int tankColorBlue;
 
 	/**
-	 * The Dispatcher sets up connectivity and runs the main thread keeping
-	 * connection to the server.
+	 * The <b>Dispatcher</b> sets up connectivity and runs the main thread
+	 * keeping connection to the server.
 	 * 
 	 * @param remoteHost
 	 *            The remote host address to connect to.
@@ -132,13 +128,13 @@ public class Dispatcher {
 
 			// parse connect response and fetch initial game state
 			JSONObject initialGameState = new JSONObject(connectDownstreamResponse).getJSONObject("welcomeToGame");
-			QuickLog.debug("Welcome to game: " + initialGameState.toString());
+			QuickLog.info("Welcome to game: " + initialGameState.toString());
 
 			// fetch rules object from initial game state
 			JSONObject jsonRules = initialGameState.getJSONObject("rules");
 			assert (jsonRules != null);
 
-			// set up processor using initial game state rules
+			// set up processor using rules from initial game state
 			Rules gameRules = new Rules(jsonRules.getDouble("moveSpeed"), jsonRules.getDouble("rotationSpeed"),
 					jsonRules.getDouble("turretRotationSpeed"), jsonRules.getDouble("fireInterval"),
 					jsonRules.getDouble("ballisticsTravelSpeed"), jsonRules.getInt("fieldOfView"),
@@ -149,30 +145,36 @@ public class Dispatcher {
 
 			processor.start();
 
+			// wait for the one-time 'game will start' message
 			JSONObject gameWillStart = new JSONObject(downstreamInput.readLine()).getJSONObject("gameWillStart");
-			QuickLog.debug("Got gameWillStart: " + gameWillStart);
+			QuickLog.info("Got gameWillStart: " + gameWillStart);
 
 			String serverResponse;
 
 			// listen for input (blocking)
 			while ((serverResponse = downstreamInput.readLine()) != null) {
 
-				QuickLog.debug("Received server response: " + serverResponse);
-
 				JSONObject serverResponseJSON = new JSONObject(serverResponse);
 
 				if (serverResponseJSON.has("tankStatusUpdate")) {
 
 					// parse context object out of raw JSON context
-					StatusUpdate statusUpdate = new StatusUpdate(serverResponseJSON.getJSONObject("tankStatusUpdate"));
+					JSONObject statusUpdate = serverResponseJSON.getJSONObject("tankStatusUpdate");
 
-					// process context
-					processor.processStatusUpdate(statusUpdate);
-					
+					Tank ownTank = new Tank(statusUpdate.getJSONObject("position").getDouble("x"), statusUpdate
+							.getJSONObject("position").getDouble("y"), statusUpdate.getDouble("direction"),
+							statusUpdate.getDouble("turretDirection"), statusUpdate.getBoolean("isMoving"),
+							statusUpdate.getBoolean("isRotating"), statusUpdate.getBoolean("isTurretRotating"));
+
+					// process tank status update
+					processor.processTankStatusUpdate(ownTank);
+
 				} else {
 
+					// TODO: handle downstream server errors
+
 					QuickLog.error("Could not process status update: " + serverResponseJSON);
-					
+
 				}
 
 			}
@@ -193,8 +195,8 @@ public class Dispatcher {
 
 	/**
 	 * Sends a Command to the server. If a CommandExecutionError occurs, the
-	 * processor will be asked to process the error which might trigger sending
-	 * a new Command.
+	 * processor will process the error which might trigger sending a new
+	 * Command.
 	 * 
 	 * @param command
 	 *            Command to send.
@@ -203,7 +205,7 @@ public class Dispatcher {
 
 		try {
 
-			// put command into JSONObject
+			// build JSONObject
 			JSONObject jsonCommand = new JSONObject().put(command.getCommand(), command.getParam());
 
 			// send command upstream
@@ -213,8 +215,8 @@ public class Dispatcher {
 
 			// get command ack
 			JSONObject jsonCommandAck = new JSONObject(upstreamInput.readLine());
-			if (jsonCommandAck.has("errorOccurred")) {
 
+			if (jsonCommandAck.has("errorOccurred")) {
 
 				// build error
 				CommandExecutionError error = new CommandExecutionError(jsonCommandAck.getJSONObject("errorOccurred")
@@ -228,7 +230,6 @@ public class Dispatcher {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
