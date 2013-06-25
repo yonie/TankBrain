@@ -1,5 +1,7 @@
 package org.yoniehax.tankoid;
 
+import java.text.DecimalFormat;
+
 public class Place {
 
 	private double x;
@@ -50,7 +52,7 @@ public class Place {
 		double distanceX = this.getX() - otherPlace.getX();
 		double distanceY = this.getY() - otherPlace.getY();
 		double totalDistance = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
-		return (totalDistance < 50 ? true : false);
+		return (totalDistance < 1 ? true : false);
 	}
 
 	/*
@@ -59,7 +61,8 @@ public class Place {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "x=" + x + ", y=" + y;
+		// we round these for presentation purposes
+		return "x=" + new DecimalFormat("#.##").format(x) + ", y=" + new DecimalFormat("#.##").format(y);
 	}
 
 }
