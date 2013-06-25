@@ -50,7 +50,7 @@ public class Place {
 		double distanceX = this.getX() - otherPlace.getX();
 		double distanceY = this.getY() - otherPlace.getY();
 		double totalDistance = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
-		return (totalDistance < 5 ? true : false);
+		return (totalDistance < 50 ? true : false);
 	}
 
 	/*
