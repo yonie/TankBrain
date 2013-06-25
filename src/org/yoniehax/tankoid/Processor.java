@@ -27,9 +27,10 @@ public class Processor extends Thread {
 
 	/**
 	 * The <b>Processor</b> is the brains of the Tank. It determines where to
-	 * move, whether to shoot, and so on. To operate the Processor needs a
-	 * Dispatcher that is the communication link to the server, and game Rules
-	 * to live by.
+	 * move, whether to shoot, and so on. The processor keeps track of
+	 * operations' time skew and corrects where necessary. To operate, the
+	 * Processor needs a Dispatcher that is the communication link to the
+	 * server, and game Rules to live by.
 	 * 
 	 * @param dispatcher
 	 *            The Dispatcher to send Commands to.
