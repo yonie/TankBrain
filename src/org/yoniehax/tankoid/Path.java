@@ -1,5 +1,9 @@
 package org.yoniehax.tankoid;
 
+import java.text.DecimalFormat;
+
+import javax.swing.text.NumberFormatter;
+
 public class Path {
 
 	private Place startingPlace;
@@ -151,8 +155,8 @@ public class Path {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "From: (" + startingPlace + "), to: (" + destinationPlace + "), distance: " + getDistance()
-				+ ", rotation angle: " + getRotationAngle();
+		return "From: (" + startingPlace + "), to: (" + destinationPlace + "), distance: " + new DecimalFormat("#.##").format(getDistance())
+				+ ", rotation angle: " + new DecimalFormat("#.##").format(getRotationAngle());
 	}
 
 	/**
