@@ -44,12 +44,36 @@ public class Path {
 	}
 
 	/**
+	 * Gets the movement duration based on the distance to travel and movement
+	 * speed, incorporating a movement speed correction percentage.
+	 * 
+	 * @param speedCorrection
+	 *            percentual correction, 100 is no correction
+	 * @return movement duration for this Path in milliseconds.
+	 */
+	public double getMovementDuration(double speedCorrection) {
+		return (getDistance() / ((movementSpeed * speedCorrection) / 100)) * 1000;
+	}
+
+	/**
 	 * Gets the rotation duration based on the current and required angle.
 	 * 
 	 * @return the rotation duration for this Path in milliseconds.
 	 */
 	public double getRotationDuration() {
 		return Math.abs(getRotationAngle() / rotationSpeed) * 1000;
+	}
+
+	/**
+	 * Gets the rotation duration based on the current and required angle,
+	 * incorporating a rotation speed correction percentage.
+	 * 
+	 * @param speedCorrection
+	 *            percentual correction, 100 is no correction
+	 * @return the rotation duration for this Path in milliseconds.
+	 */
+	public double getRotationDuration(double speedCorrection) {
+		return Math.abs(getRotationAngle() / ((rotationSpeed * 100) / speedCorrection)) * 1000;
 	}
 
 	/**
@@ -138,5 +162,14 @@ public class Path {
 	 */
 	public double getRotationSpeed() {
 		return rotationSpeed;
+	}
+
+	/**
+	 * Gets the given starting angle.
+	 * 
+	 * @return the starting angle.
+	 */
+	public double getStartingAngle() {
+		return startingAngle;
 	}
 }

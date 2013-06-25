@@ -14,6 +14,10 @@ public class Processor extends Thread {
 	private Place targetPlace;
 
 	private double movementSpeedCorrection;
+	private double rotationSpeedCorrection;
+
+	// aggressiveness of the correction algorithm, lower is more aggressive
+	final double correctionAggression = 10;
 
 	// processor modes
 	final int TEST = 0;
@@ -36,7 +40,7 @@ public class Processor extends Thread {
 		this.dispatcher = dispatcher;
 		this.rules = rules;
 		this.running = true;
-		this.mode = RANDOM;
+		this.mode = TEST;
 
 		// TODO: dynamic array dimensions based on server
 		this.heatMapSize = 1001;
@@ -89,25 +93,55 @@ public class Processor extends Thread {
 
 					// we only rotate for angles bigger than 5 degrees
 					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5) {
-						QuickLog.debug("Rotating for " + pathToTraverse.getRotationDuration() / 1000 + " seconds...");
+						long rotationDuration = (long) pathToTraverse
+								.getRotationDuration(100 + rotationSpeedCorrection);
+						QuickLog.debug("Rotating for " + rotationDuration + " milliseconds...");
 						dispatcher.sendCommand(new Command("rotateTankWithSpeed",
 								(pathToTraverse.getRotationAngle() > 0 ? 1 : -1)));
-						Thread.sleep((long) (pathToTraverse.getRotationDuration()));
+						Thread.sleep(rotationDuration);
 						dispatcher.sendCommand(new Command("stop", "tankRotation"));
+					}
+
+					// calibrate rotation speed if duration was long enough
+					if (pathToTraverse.getRotationDuration() > 5000) {
+
+						// allow for the latest tank updates to be processed
+						Thread.sleep(1000);
+
+						double plannedAngle = pathToTraverse.getRotationAngle();
+
+						// compensate for positive/negative angles when turning
+						if (plannedAngle < 0)
+							plannedAngle += 360;
+						double actualAngle = ownTank.getAngle() - pathToTraverse.getStartingAngle();
+						if (actualAngle < 0)
+							actualAngle += 360;
+
+						// difference between planned and actual angles
+						double rotationSpeedDifference = (((actualAngle - plannedAngle) / plannedAngle) * 100);
+						QuickLog.info("Planned angle: " + plannedAngle + ", actual angle: " + actualAngle
+								+ ", difference: " + rotationSpeedDifference + "%.");
+
+						// update the correction
+						rotationSpeedCorrection = rotationSpeedCorrection
+								+ (rotationSpeedDifference / correctionAggression);
+						QuickLog.info("New rotation speed correction: " + rotationSpeedCorrection + "%");
 					}
 
 					// we only move if we are not nearby our target place
 					if (!startingPlace.isNearby(targetPlace)) {
-						QuickLog.debug("Moving for " + pathToTraverse.getMovementDuration() / 1000 + " seconds...");
+						long movementDuration = (long) pathToTraverse
+								.getMovementDuration(100 + movementSpeedCorrection);
+						QuickLog.debug("Moving for " + movementDuration + " milliseconds...");
 						dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
-						Thread.sleep((long) (pathToTraverse.getMovementDuration()));
+						Thread.sleep(movementDuration);
 						dispatcher.sendCommand(new Command("stop", "moving"));
 
-						// calibrate movement speed
+						// calibrate movement speed if duration was long enough
 						if (pathToTraverse.getMovementDuration() > 5000) {
 
-							// allow for the latest tank update to be processed
-							Thread.sleep(250);
+							// allow for the latest tank updates to be processed
+							Thread.sleep(1000);
 
 							Place endingPlace = ownTank.getPlace();
 							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
@@ -121,7 +155,8 @@ public class Processor extends Thread {
 									+ "%.");
 
 							// update the correction
-							movementSpeedCorrection = movementSpeedCorrection + (movementSpeedDifference / 10);
+							movementSpeedCorrection = movementSpeedCorrection
+									+ (movementSpeedDifference / correctionAggression);
 							QuickLog.info("New movement speed correction: " + movementSpeedCorrection + "%");
 						}
 					}
@@ -179,9 +214,15 @@ public class Processor extends Thread {
 	 * Sets a new target based on the current mode.
 	 */
 	private void setNewTarget() {
-		if (mode == TEST)
-			targetPlace = new Place(500, 500);
-		else if (mode == RANDOM)
+		if (mode == TEST) {
+			// have the tank alternate between x=800 and x=200
+			if (targetPlace == null)
+				targetPlace = new Place(500, 500);
+			else if (targetPlace.getX() < 500)
+				targetPlace = new Place(800, 500);
+			else
+				targetPlace = new Place(200, 500);
+		} else if (mode == RANDOM)
 			targetPlace = heatMap.findRandomPlace();
 		else if (mode == QUIET)
 			targetPlace = heatMap.findQuietPlace();
