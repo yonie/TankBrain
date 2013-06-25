@@ -1,5 +1,7 @@
 package org.yoniehax.tankoid;
 
+import java.text.DecimalFormat;
+
 import org.yoniehax.helper.QuickLog;
 
 public class Processor extends Thread {
@@ -80,87 +82,46 @@ public class Processor extends Thread {
 					Place startingPlace = ownTank.getPlace();
 					double startingAngle = ownTank.getAngle();
 
+					// set initial target
+					if (targetPlace == null) {
+						QuickLog.info("Setting initial target!");
+						setNewTarget();
+					}
+					
 					// check if we need to set a new target
-					while (targetPlace == null || targetPlace.isNearby(startingPlace)) {
-						QuickLog.info("Setting new target!");
+					while (targetPlace.isNearby(startingPlace)) {
+						QuickLog.info("Target place (" + targetPlace + ") nearby: (" + startingPlace
+								+ "). Setting new target!");
 						setNewTarget();
 					}
 
+					// TODO: remove speed, duration, speed correction etc.
+					
 					// determine path, include speed correction
 					Path pathToTraverse = new Path(startingPlace, targetPlace, startingAngle, rules.getMovementSpeed()
 							* (1 - (movementSpeedCorrection / 100)), rules.getRotationSpeed());
 
 					QuickLog.info("Path to traverse: " + pathToTraverse);
 
-					// we only rotate for angles bigger than 5 degrees
-					if (pathToTraverse.getRotationAngle() > 5 || pathToTraverse.getRotationAngle() < 5) {
-						long rotationDuration = (long) pathToTraverse
-								.getRotationDuration(100 + rotationSpeedCorrection);
-						QuickLog.debug("Rotating for " + rotationDuration + " milliseconds...");
-						dispatcher.sendCommand(new Command("rotateTankWithSpeed",
-								(pathToTraverse.getRotationAngle() > 0 ? 1 : -1)));
-						Thread.sleep(rotationDuration);
-						dispatcher.sendCommand(new Command("stop", "tankRotation"));
-					}
+					// determines how often the processor calculates commands
+					double sleepTimer = 2;
 
-					// calibrate rotation speed if duration was long enough
-					if (pathToTraverse.getRotationDuration() > 5000) {
+					// throttles based on distance / angle to still cover
+					double rotationThrottle = Math.min(1, Math.abs(pathToTraverse.getRotationAngle())
+							/ (sleepTimer * pathToTraverse.getRotationSpeed()));
+					double moveThrottle = Math.min(1, Math.min(
+							1 / (Math.abs(pathToTraverse.getRotationAngle() / pathToTraverse.getRotationSpeed())),
+							(pathToTraverse.getDistance() / (pathToTraverse.getMovementSpeed() * sleepTimer * 2))));
 
-						// allow for the latest tank updates to be processed
-						Thread.sleep(1000);
+					QuickLog.debug("Rotation throttle: " + new DecimalFormat("#.##").format(rotationThrottle)
+							+ ", move throttle: " + new DecimalFormat("#.##").format(moveThrottle));
 
-						double plannedAngle = pathToTraverse.getRotationAngle();
-
-						// compensate for positive/negative angles when turning
-						if (plannedAngle < 0)
-							plannedAngle += 360;
-						double actualAngle = ownTank.getAngle() - pathToTraverse.getStartingAngle();
-						if (actualAngle < 0)
-							actualAngle += 360;
-
-						// difference between planned and actual angles
-						double rotationSpeedDifference = (((actualAngle - plannedAngle) / plannedAngle) * 100);
-						QuickLog.info("Planned angle: " + plannedAngle + ", actual angle: " + actualAngle
-								+ ", difference: " + rotationSpeedDifference + "%.");
-
-						// update the correction
-						rotationSpeedCorrection = rotationSpeedCorrection
-								+ (rotationSpeedDifference / correctionAggression);
-						QuickLog.info("New rotation speed correction: " + rotationSpeedCorrection + "%");
-					}
-
-					// we only move if we are not nearby our target place
-					if (!startingPlace.isNearby(targetPlace)) {
-						long movementDuration = (long) pathToTraverse
-								.getMovementDuration(100 + movementSpeedCorrection);
-						QuickLog.debug("Moving for " + movementDuration + " milliseconds...");
-						dispatcher.sendCommand(new Command("moveForwardWithSpeed", 1));
-						Thread.sleep(movementDuration);
-						dispatcher.sendCommand(new Command("stop", "moving"));
-
-						// calibrate movement speed if duration was long enough
-						if (pathToTraverse.getMovementDuration() > 5000) {
-
-							// allow for the latest tank updates to be processed
-							Thread.sleep(1000);
-
-							Place endingPlace = ownTank.getPlace();
-							Path pathActuallyTraversed = new Path(startingPlace, endingPlace, startingAngle,
-									rules.getMovementSpeed(), rules.getRotationSpeed());
-
-							// difference between planned and actual movement
-							double movementSpeedDifference = (((pathActuallyTraversed.getDistance() - pathToTraverse
-									.getDistance()) / pathToTraverse.getDistance()) * 100);
-							QuickLog.info("Planned movement: " + pathToTraverse.getDistance() + ", actual movement: "
-									+ pathActuallyTraversed.getDistance() + ", difference: " + movementSpeedDifference
-									+ "%.");
-
-							// update the correction
-							movementSpeedCorrection = movementSpeedCorrection
-									+ (movementSpeedDifference / correctionAggression);
-							QuickLog.info("New movement speed correction: " + movementSpeedCorrection + "%");
-						}
-					}
+					dispatcher.sendCommand(new Command("rotateTankWithSpeed",
+							(pathToTraverse.getRotationAngle() > 0 ? rotationThrottle : -rotationThrottle)));
+					dispatcher.sendCommand(new Command("moveForwardWithSpeed", moveThrottle));
+					Thread.sleep((long) Math.round(sleepTimer * 1000));
+					dispatcher.sendCommand(new Command("stop", "tankRotation"));
+					dispatcher.sendCommand(new Command("stop", "moving"));
 
 				} else {
 
