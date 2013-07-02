@@ -1,24 +1,34 @@
 package org.yoniehax.tankoid;
 
+import java.util.Collections;
+import java.util.Vector;
+
+import org.yoniehax.helper.QuickLog;
+
 public class HeatMap {
 
 	private int heatMapSize;
-	private int[][][] heatMap;
+	private int resolution;
+	private int[][] heatMap;
 
 	/**
 	 * The <b>HeatMap</b> can be used to store data about the game world and
 	 * objects in it. This can then be used to find busy or silent spots. The
-	 * HeatMap stores both positive and negative coordinates.
+	 * HeatMap also features a resolution setting to concatenate values.
 	 * 
-	 * @param heatMapSize
-	 *            size of the HeatMap to be used. Should be set to maximum
-	 *            positive or negative value of the game grid.
+	 * @param mapSize
+	 *            map size to be used. Should be set to maximum positive or
+	 *            negative value of the game grid.
+	 * @param resolution
+	 *            the amount of grid points concatenated (meaning a resolution
+	 *            of 1 is full grid resolution, 2 is half resolution, and so
+	 *            on).
 	 */
-	public HeatMap(int heatMapSize) {
-		this.heatMapSize = heatMapSize;
-
-		// 4 arrays to store both positive and negative coordinates
-		heatMap = new int[4][heatMapSize][heatMapSize];
+	public HeatMap(int mapSize, int resolution) {
+		QuickLog.debug("Creating new HeatMap for grid with size " + mapSize + " with resolution " + resolution + "...");
+		this.heatMapSize = (int) Math.floor(mapSize / resolution) + 1;
+		this.resolution = resolution;
+		heatMap = new int[heatMapSize][heatMapSize];
 	}
 
 	/**
@@ -28,17 +38,10 @@ public class HeatMap {
 	 *            the Place that should be incremented in the HeatMap.
 	 */
 	public void increment(Place place) {
-		int x = (int) Math.round(place.getX());
-		int y = (int) Math.round(place.getY());
+		int x = (int) Math.floor(place.getX() / resolution);
+		int y = (int) Math.floor(place.getY() / resolution);
 
-		if (x >= 0 && y >= 0)
-			heatMap[1][x][y] += 1;
-		else if (x >= 0 && y < 0)
-			heatMap[3][x][-y] += 1;
-		else if (x < 0 && y >= 0)
-			heatMap[0][-x][y] += 1;
-		else
-			heatMap[2][-x][-y] += 1;
+		heatMap[x][y] += 1;
 	}
 
 	/**
@@ -48,31 +51,45 @@ public class HeatMap {
 	 *         amount of hits, the first found place will be returned.
 	 */
 	public Place findMostCrowdedPlace() {
-		int mostCrowdedPlaceMap = 0;
 		int mostCrowdedPlaceX = 0;
 		int mostCrowdedPlaceY = 0;
 
-		// FIXME: we only work with positive coordinates (array 1) for now
-		for (int map = 1; map < 2; map++) {
-			for (int x = 0; x < heatMapSize; x++) {
-				for (int y = 0; y < heatMapSize; y++) {
-					if (heatMap[map][x][y] > heatMap[map][mostCrowdedPlaceX][mostCrowdedPlaceY]) {
-						mostCrowdedPlaceMap = map;
-						mostCrowdedPlaceX = x;
-						mostCrowdedPlaceY = y;
-					}
+		for (int x = 0; x < heatMapSize; x++) {
+			for (int y = 0; y < heatMapSize; y++) {
+				if (heatMap[x][y] > heatMap[mostCrowdedPlaceX][mostCrowdedPlaceY]) {
+					mostCrowdedPlaceX = x;
+					mostCrowdedPlaceY = y;
 				}
 			}
 		}
 
-		if (mostCrowdedPlaceMap == 0)
-			return new Place(-mostCrowdedPlaceX, mostCrowdedPlaceY);
-		else if (mostCrowdedPlaceMap == 1)
-			return new Place(mostCrowdedPlaceX, mostCrowdedPlaceY);
-		else if (mostCrowdedPlaceMap == 2)
-			return new Place(-mostCrowdedPlaceX, -mostCrowdedPlaceY);
-		else
-			return new Place(mostCrowdedPlaceX, -mostCrowdedPlaceY);
+		return new Place(mostCrowdedPlaceX * resolution, mostCrowdedPlaceY * resolution);
+	}
+
+	/**
+	 * Finds the most crowded places currently available in the HeatMap.
+	 * 
+	 * @param num
+	 *            the amount of crowded places to find.
+	 * @return the most crowded places currently available in the HeatMap.
+	 */
+	public Vector<HeatMapPlace> findCrowdedPlaces(int num) {
+		Vector<HeatMapPlace> results = new Vector<HeatMapPlace>(num);
+		results.add(new HeatMapPlace(0, 0, 0));
+
+		for (int x = 0; x < heatMapSize; x++) {
+			for (int y = 0; y < heatMapSize; y++) {
+				if (heatMap[x][y] > results.get(0).getHeat()) {
+					QuickLog.debug("Adding new HeatMapPlace " + x + " " + y + " " + heatMap[x][y]);
+					if (results.size() == num)
+						results.remove(0);
+					results.add(new HeatMapPlace(x * resolution, y * resolution, heatMap[x][y]));
+					Collections.sort(results);
+				}
+			}
+		}
+
+		return results;
 	}
 
 	/**
@@ -84,29 +101,17 @@ public class HeatMap {
 	public Place findQuietPlace() {
 		int quietPlaceX = 0;
 		int quietPlaceY = 0;
-		int quietPlaceMap = 0;
 
-		// FIXME: we only work with positive coordinates (array 1) for now
-		for (int map = 1; map < 2; map++) {
-			for (int x = 0; x < heatMapSize; x++) {
-				for (int y = 0; y < heatMapSize; y++) {
-					if (heatMap[map][x][y] < heatMap[quietPlaceMap][quietPlaceX][quietPlaceY]) {
-						quietPlaceX = x;
-						quietPlaceY = y;
-						quietPlaceMap = map;
-					}
+		for (int x = 0; x < heatMapSize; x++) {
+			for (int y = 0; y < heatMapSize; y++) {
+				if (heatMap[x][y] < heatMap[quietPlaceX][quietPlaceY]) {
+					quietPlaceX = x;
+					quietPlaceY = y;
 				}
 			}
 		}
 
-		if (quietPlaceMap == 0)
-			return new Place(-quietPlaceX, quietPlaceY);
-		else if (quietPlaceMap == 1)
-			return new Place(quietPlaceX, quietPlaceY);
-		else if (quietPlaceMap == 2)
-			return new Place(-quietPlaceX, -quietPlaceY);
-		else
-			return new Place(quietPlaceX, -quietPlaceY);
+		return new Place(quietPlaceX * resolution, quietPlaceY * resolution);
 	}
 
 	/**
@@ -115,19 +120,10 @@ public class HeatMap {
 	 * @return a random Place.
 	 */
 	public Place findRandomPlace() {
-		// FIXME: we only work with positive coordinates (array 1) for now
-		int map = 1; // (int) (Math.random() * 3);
 		int x = (int) (Math.random() * heatMapSize);
 		int y = (int) (Math.random() * heatMapSize);
 
-		if (map == 0)
-			return new Place(-x, y);
-		else if (map == 1)
-			return new Place(x, y);
-		else if (map == 2)
-			return new Place(-x, -y);
-		else
-			return new Place(x, -y);
+		return new Place(x * resolution, y * resolution);
 	}
 
 }

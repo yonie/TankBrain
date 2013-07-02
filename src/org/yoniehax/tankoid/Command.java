@@ -1,5 +1,7 @@
 package org.yoniehax.tankoid;
 
+// TODO: refactor into base Command class with different subclasses
+
 public class Command {
 	private String command;
 	private String param;

@@ -11,15 +11,21 @@ public class Processor extends Thread {
 	private boolean running;
 	private HeatMap heatMap;
 	private Tank ownTank;
-	private int heatMapSize;
+	private int mapSize;
 	private int mode;
 	private Place targetPlace;
 
 	private double movementSpeedCorrection;
 	private double rotationSpeedCorrection;
 
+	private double rotationThrottle;
+	private double moveThrottle;
+
 	// aggressiveness of the correction algorithm, lower is more aggressive
 	final double correctionAggression = 10;
+
+	// determines how often the processor calculates commands, in seconds
+	final double clock = 0.1;
 
 	// processor modes
 	final int TEST = 0;
@@ -43,12 +49,20 @@ public class Processor extends Thread {
 		this.dispatcher = dispatcher;
 		this.rules = rules;
 		this.running = true;
-		this.mode = TEST;
+		this.mode = RANDOM;
+	}
 
-		// TODO: dynamic array dimensions based on server
-		this.heatMapSize = 1001;
-
-		heatMap = new HeatMap(heatMapSize);
+	/**
+	 * Sets the game map dimensions.
+	 * 
+	 * @param x
+	 *            width of the game map.
+	 * @param y
+	 *            height of the game map.
+	 */
+	public void setMapSize(int size) {
+		this.mapSize = size;
+		heatMap = new HeatMap(mapSize, 10);
 	}
 
 	/**
@@ -87,7 +101,7 @@ public class Processor extends Thread {
 						QuickLog.info("Setting initial target!");
 						setNewTarget();
 					}
-					
+
 					// check if we need to set a new target
 					while (targetPlace.isNearby(startingPlace)) {
 						QuickLog.info("Target place (" + targetPlace + ") nearby: (" + startingPlace
@@ -96,22 +110,19 @@ public class Processor extends Thread {
 					}
 
 					// TODO: remove speed, duration, speed correction etc.
-					
+
 					// determine path, include speed correction
 					Path pathToTraverse = new Path(startingPlace, targetPlace, startingAngle, rules.getMovementSpeed()
 							* (1 - (movementSpeedCorrection / 100)), rules.getRotationSpeed());
 
-					QuickLog.info("Path to traverse: " + pathToTraverse);
-
-					// determines how often the processor calculates commands
-					double sleepTimer = 2;
+					QuickLog.debug("Path to traverse: " + pathToTraverse);
 
 					// throttles based on distance / angle to still cover
-					double rotationThrottle = Math.min(1, Math.abs(pathToTraverse.getRotationAngle())
-							/ (sleepTimer * pathToTraverse.getRotationSpeed()));
-					double moveThrottle = Math.min(1, Math.min(
+					rotationThrottle = Math.min(1, Math.abs(pathToTraverse.getRotationAngle())
+							/ (clock * pathToTraverse.getRotationSpeed()));
+					moveThrottle = Math.min(1, Math.min(
 							1 / (Math.abs(pathToTraverse.getRotationAngle() / pathToTraverse.getRotationSpeed())),
-							(pathToTraverse.getDistance() / (pathToTraverse.getMovementSpeed() * sleepTimer * 2))));
+							(pathToTraverse.getDistance() / (pathToTraverse.getMovementSpeed() * clock * 2))));
 
 					QuickLog.debug("Rotation throttle: " + new DecimalFormat("#.##").format(rotationThrottle)
 							+ ", move throttle: " + new DecimalFormat("#.##").format(moveThrottle));
@@ -119,7 +130,7 @@ public class Processor extends Thread {
 					dispatcher.sendCommand(new Command("rotateTankWithSpeed",
 							(pathToTraverse.getRotationAngle() > 0 ? rotationThrottle : -rotationThrottle)));
 					dispatcher.sendCommand(new Command("moveForwardWithSpeed", moveThrottle));
-					Thread.sleep((long) Math.round(sleepTimer * 1000));
+					Thread.sleep((long) Math.round(clock * 1000));
 					dispatcher.sendCommand(new Command("stop", "tankRotation"));
 					dispatcher.sendCommand(new Command("stop", "moving"));
 
@@ -192,4 +203,57 @@ public class Processor extends Thread {
 			targetPlace = heatMap.findMostCrowdedPlace();
 	}
 
+	/**
+	 * Returns the player's Tank object.
+	 * 
+	 * @return the player's Tank object.
+	 */
+	public Tank getOwnTank() {
+		return ownTank;
+	}
+
+	/**
+	 * Returns the current size of the game map.
+	 * 
+	 * @return the current size of the game map.
+	 */
+	public int getMapSize() {
+		return mapSize;
+	}
+
+	/**
+	 * Returns the current target.
+	 * 
+	 * @return the current target.
+	 */
+	public Place getTargetPlace() {
+		return targetPlace;
+	}
+
+	/**
+	 * Returns the latest rotation throttle.
+	 * 
+	 * @return the latest rotation throttle.
+	 */
+	public double getRotationThrottle() {
+		return rotationThrottle;
+	}
+
+	/**
+	 * Returns the latest movement throttle.
+	 * 
+	 * @return the latest movement throttle.
+	 */
+	public double getMoveThrottle() {
+		return moveThrottle;
+	}
+
+	/**
+	 * Returns the current heatMap.
+	 * 
+	 * @return the current heatMap.
+	 */
+	public HeatMap getHeatMap() {
+		return heatMap;
+	}
 }

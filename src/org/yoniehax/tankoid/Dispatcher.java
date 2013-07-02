@@ -10,6 +10,7 @@ import java.net.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.yoniehax.helper.QuickLog;
+import org.yoniehax.tankoid.gui.DebugGUI;
 
 public class Dispatcher {
 
@@ -149,6 +150,12 @@ public class Dispatcher {
 			JSONObject gameWillStart = new JSONObject(downstreamInput.readLine()).getJSONObject("gameWillStart");
 			QuickLog.info("Got gameWillStart: " + gameWillStart);
 
+			// get the map dimensions
+			// FIXME: we don't deal with non-square game maps
+			int mapSize = gameWillStart.getJSONObject("onMap").getJSONObject("withSize").getInt("width");
+			processor.setMapSize(mapSize);
+			DebugGUI gui = new DebugGUI(processor);
+
 			String serverResponse;
 
 			// listen for input (blocking)
@@ -168,6 +175,7 @@ public class Dispatcher {
 
 					// process tank status update
 					processor.processTankStatusUpdate(ownTank);
+					gui.repaint();
 
 				} else {
 
